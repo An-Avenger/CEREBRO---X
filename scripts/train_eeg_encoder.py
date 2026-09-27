@@ -125,8 +125,8 @@ def preprocess(X_train_raw, X_test_raw):
     return X_train, X_test, imp, sc
 
 
-def run_training(X_train, y_train, X_test, y_test, num_classes, device, artifact_dir, tag):
-    """Train a single model and return metrics."""
+def run_training(X_train, y_train, X_val, y_val, X_test, y_test, num_classes, device, artifact_dir, tag):
+    """Train a single model using val for early stopping, and return metrics on untouched test set."""
     cw_counts = np.bincount(y_train, minlength=num_classes).astype(float)
     cw_counts[cw_counts == 0] = 1.0
     cw = torch.tensor(len(y_train) / (num_classes * cw_counts), dtype=torch.float32).to(device)
@@ -139,11 +139,16 @@ def run_training(X_train, y_train, X_test, y_test, num_classes, device, artifact
         torch.tensor(X_train, dtype=torch.float32),
         torch.tensor(y_train, dtype=torch.long)
     )
+    val_ds = TensorDataset(
+        torch.tensor(X_val, dtype=torch.float32),
+        torch.tensor(y_val, dtype=torch.long)
+    )
     test_ds = TensorDataset(
         torch.tensor(X_test, dtype=torch.float32),
         torch.tensor(y_test, dtype=torch.long)
     )
     train_loader = DataLoader(train_ds, batch_size=16, shuffle=True)
+    val_loader   = DataLoader(val_ds, batch_size=16, shuffle=False)
     test_loader  = DataLoader(test_ds, batch_size=16, shuffle=False)
 
     best_val_loss, best_state, pat = float("inf"), None, 0
@@ -165,7 +170,7 @@ def run_training(X_train, y_train, X_test, y_test, num_classes, device, artifact
         model.eval()
         vl, vn = 0.0, 0
         with torch.no_grad():
-            for Xb, yb in test_loader:
+            for Xb, yb in val_loader:
                 vl += criterion(model(Xb.to(device)), yb.to(device)).item() * len(yb)
                 vn += len(yb)
         val_loss = vl / max(vn, 1)
@@ -261,13 +266,29 @@ def main():
     # ─── 3-Class: AD vs FTD vs Control ───────────────────────────────────────
     logger.info("=== TASK 1: 3-Class (AD vs FTD vs Control) ===")
     from sklearn.model_selection import train_test_split
-    X_train_raw, X_test_raw, y_train, y_test = train_test_split(
-        X_raw, y, test_size=0.2, random_state=SEED, stratify=y
+    
+    # Split: 70% Train, 15% Val, 15% Test
+    X_temp_raw, X_test_raw, y_temp, y_test = train_test_split(
+        X_raw, y, test_size=0.15, random_state=SEED, stratify=y
     )
-    X_train, X_test, imp3, sc3 = preprocess(X_train_raw, X_test_raw)
+    # Remaining 85% -> split into Train and Val
+    # 0.15 / 0.85 = ~0.176 for validation
+    X_train_raw, X_val_raw, y_train, y_val = train_test_split(
+        X_temp_raw, y_temp, test_size=(0.15 / 0.85), random_state=SEED, stratify=y_temp
+    )
+    
+    imp3 = SimpleImputer(strategy="median")
+    X_train_imp = imp3.fit_transform(X_train_raw)
+    X_val_imp = imp3.transform(X_val_raw)
+    X_test_imp = imp3.transform(X_test_raw)
+
+    sc3 = StandardScaler()
+    X_train = sc3.fit_transform(X_train_imp)
+    X_val = sc3.transform(X_val_imp)
+    X_test = sc3.transform(X_test_imp)
 
     metrics_3class, model_3class = run_training(
-        X_train, y_train, X_test, y_test,
+        X_train, y_train, X_val, y_val, X_test, y_test,
         num_classes=3, device=device, artifact_dir=artifact_dir, tag="3class"
     )
 
@@ -276,13 +297,25 @@ def main():
     y_bin = (y < 2).astype(int)  # 0=AD, 1=FTD → "disease"=1, 2=Control → "healthy"=0
     y_bin_mapped = np.where(y < 2, 0, 1)  # 0=disease, 1=control
 
-    X_tr_raw_b, X_te_raw_b, yb_train, yb_test = train_test_split(
-        X_raw, y_bin_mapped, test_size=0.2, random_state=SEED, stratify=y_bin_mapped
+    X_temp_raw_b, X_te_raw_b, yb_temp, yb_test = train_test_split(
+        X_raw, y_bin_mapped, test_size=0.15, random_state=SEED, stratify=y_bin_mapped
     )
-    X_tr_b, X_te_b, imp2, sc2 = preprocess(X_tr_raw_b, X_te_raw_b)
+    X_tr_raw_b, X_val_raw_b, yb_train, yb_val = train_test_split(
+        X_temp_raw_b, yb_temp, test_size=(0.15 / 0.85), random_state=SEED, stratify=yb_temp
+    )
+    
+    imp2 = SimpleImputer(strategy="median")
+    X_tr_imp_b = imp2.fit_transform(X_tr_raw_b)
+    X_val_imp_b = imp2.transform(X_val_raw_b)
+    X_te_imp_b = imp2.transform(X_te_raw_b)
+
+    sc2 = StandardScaler()
+    X_tr_b = sc2.fit_transform(X_tr_imp_b)
+    X_val_b = sc2.transform(X_val_imp_b)
+    X_te_b = sc2.transform(X_te_imp_b)
 
     metrics_binary, model_binary = run_training(
-        X_tr_b, yb_train, X_te_b, yb_test,
+        X_tr_b, yb_train, X_val_b, yb_val, X_te_b, yb_test,
         num_classes=2, device=device, artifact_dir=artifact_dir, tag="binary"
     )
 

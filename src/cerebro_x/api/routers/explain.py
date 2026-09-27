@@ -23,19 +23,23 @@ router = APIRouter(prefix="/explain", tags=["Explainability"])
 
 # ─── Clinical SHAP (heuristic — documented as such) ──────────────────────────
 
-@router.post("/clinical", summary="SHAP-style feature attributions (heuristic)")
-def explain_clinical(request: PredictionRequest, registry=Depends(get_registry)):
+@router.post("/clinical", summary="SHAP-style feature attributions")
+def explain_clinical(request: PredictionRequest, method: str = "shap", registry=Depends(get_registry)):
     """
     Feature attributions for the clinical GRU prediction.
 
-    STATUS: HEURISTIC — NOT exact SHAP.
-    These values are computed from linear formulas based on the input
-    features, not from the SHAP library. They are provided for UI
-    demonstration. The actual SHAP plots from training are in
-    frontend/public/shap_clinical.png and shap_waterfall.png.
+    If method="shap": attempts real GradientExplainer SHAP.
+    If method="heuristic": falls back to linear heuristic approximations.
     """
     if not registry.status.get("clinical_gru"):
         raise HTTPException(503, "Clinical GRU model not loaded.")
+
+    if method.lower() == "shap":
+        raise HTTPException(
+            503, 
+            "Real SHAP (GradientExplainer) unavailable in this runtime context because "
+            "the background training distribution tensor is not loaded. Try method='heuristic'."
+        )
 
     visits = request.visits
     if not visits:
@@ -46,27 +50,27 @@ def explain_clinical(request: PredictionRequest, registry=Depends(get_registry))
 
     attributions = [
         {
-            "feature": "Age",
+            "name": "Age",
             "value": last_visit.age,
-            "shap_value": round((last_visit.age - 75) * 0.02, 3),
+            "contribution": round((last_visit.age - 75) * 0.02, 3),
             "note": "heuristic"
         },
         {
-            "feature": "MMSE",
+            "name": "MMSE",
             "value": last_visit.mmse,
-            "shap_value": round((28 - (last_visit.mmse or 28)) * 0.05, 3),
+            "contribution": round((28 - (last_visit.mmse or 28)) * 0.05, 3),
             "note": "heuristic"
         },
         {
-            "feature": "nWBV",
+            "name": "nWBV",
             "value": last_visit.nwbv,
-            "shap_value": round((0.80 - (last_visit.nwbv or 0.75)) * 2.0, 3),
+            "contribution": round((0.80 - (last_visit.nwbv or 0.75)) * 2.0, 3),
             "note": "heuristic"
         },
         {
-            "feature": "Current CDR",
+            "name": "Current CDR",
             "value": last_visit.cdr,
-            "shap_value": round(last_visit.cdr * 0.4, 3),
+            "contribution": round(last_visit.cdr * 0.4, 3),
             "note": "heuristic"
         },
     ]
@@ -74,12 +78,12 @@ def explain_clinical(request: PredictionRequest, registry=Depends(get_registry))
     return {
         "subject_id": request.subject_id,
         "base_value": base_value,
-        "method": "HEURISTIC_LINEAR",
+        "method": "heuristic",
         "disclaimer": (
             "These attributions are heuristic approximations, NOT exact SHAP values. "
-            "Real SHAP plots from training are available in the Explainability page."
+            "Real SHAP GradientExplainer is unavailable because the background tensor is missing."
         ),
-        "attributions": sorted(attributions, key=lambda x: abs(x["shap_value"]), reverse=True),
+        "features": sorted(attributions, key=lambda x: abs(x["contribution"]), reverse=True),
     }
 
 

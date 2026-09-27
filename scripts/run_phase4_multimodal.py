@@ -1,6 +1,8 @@
 """Phase 4 Evaluation: Training the TriModalCerebroNet.
 
-Trains the Digital Brain Twin architecture on Clinical, MRI, and EEG modalities.
+STATUS: Tri-modal architecture scaffold
+WARNING: This is a scaffold. Real patient-aligned MRI + EEG + clinical data does not exist.
+Do NOT report synthetic training metrics as real medical-model performance.
 """
 import argparse
 import logging
@@ -44,7 +46,9 @@ def align_all_modalities(pairs_df: pd.DataFrame, mri_dir: str, eeg_dir: str) -> 
 
 def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    logger.info(f"Starting Phase 4 Multimodal Training on {device}...")
+    logger.info(f"Starting Tri-modal architecture scaffold on {device}...")
+    logger.warning("WARNING: This is a scaffold training loop with synthetic MRI and EEG data.")
+    logger.warning("Do NOT claim this as real patient-level Clinical + MRI + EEG fusion.")
 
     # 1. Load Clinical Data
     raw_df = load_oasis2_auto()
@@ -140,12 +144,26 @@ def main(args):
     
     logger.info(f"Validation Results - Acc: {acc:.4f} | B-Acc: {bacc:.4f} | F1: {f1:.4f}")
     
-    # 10. Save Artifacts
     out_dir = Path("artifacts/experiments/PHASE4_MULTIMODAL")
     out_dir.mkdir(parents=True, exist_ok=True)
     
-    torch.save(model.state_dict(), out_dir / "trimodal_cerebro_net.pt")
-    logger.info(f"Saved model to {out_dir}")
+    torch.save(model.state_dict(), out_dir / "trimodal_cerebro_net_scaffold.pt")
+    
+    import json
+    metadata = {
+        "status": "Tri-modal architecture scaffold",
+        "modality_status": {
+            "clinical": "real",
+            "mri": "synthetic fallback (no checkpoint/data)",
+            "eeg": "standalone (synthetic fallback for tri-modal)",
+            "aligned_tri_modal": False
+        },
+        "warning": "Do NOT report synthetic training metrics as real medical-model performance."
+    }
+    with open(out_dir / "metadata.json", "w") as f:
+        json.dump(metadata, f, indent=2)
+        
+    logger.info(f"Saved scaffold model and metadata to {out_dir}")
 
 
 if __name__ == "__main__":

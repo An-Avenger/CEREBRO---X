@@ -19,19 +19,19 @@
   "n_features_total": 107,
   "critical_limitation": "STANDALONE ENCODER ONLY. This model is trained on a DIFFERENT PATIENT COHORT than OASIS-2. Patient-level fusion with OASIS-2 clinical data is NOT possible without a dataset that has both EEG and OASIS-2 clinical records for the same patients. See DOCS/EEG_LIMITATION.md for full explanation.",
   "3class_AD_FTD_Control": {
-    "accuracy": 0.4444444444444444,
-    "balanced_accuracy": 0.47301587301587306,
-    "f1_macro": 0.4447415329768271,
-    "f1_weighted": 0.4387997623291741,
-    "n_test": 18,
-    "n_train": 69
+    "accuracy": 0.2857142857142857,
+    "balanced_accuracy": 0.35555555555555557,
+    "f1_macro": 0.2692307692307692,
+    "f1_weighted": 0.24450549450549453,
+    "n_test": 14,
+    "n_train": 60
   },
   "binary_disease_vs_control": {
-    "accuracy": 0.7777777777777778,
-    "balanced_accuracy": 0.6666666666666666,
-    "f1_macro": 0.6785714285714286,
-    "f1_weighted": 0.738095238095238,
-    "n_test": 18,
-    "n_train": 69
+    "accuracy": 0.5,
+    "balanced_accuracy": 0.4777777777777778,
+    "f1_macro": 0.47593582887700536,
+    "f1_weighted": 0.5080213903743316,
+    "n_test": 14,
+    "n_train": 60
   }
 }

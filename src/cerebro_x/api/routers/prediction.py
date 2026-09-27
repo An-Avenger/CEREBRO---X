@@ -86,6 +86,7 @@ def predict_clinical(
     description=(
         "Predicts the next-visit CDR class using the bimodal fusion model that combines "
         "clinical visit history (GRU) with MRI-derived scalars (nWBV, eTIV, ASF). "
+        "STATUS: LEGACY SCALAR EXPERIMENT. "
         "MRI inputs are OASIS-2 scalar features — NOT raw NIfTI CNN embeddings. "
         "(EXP-FUSION-BIMODAL-001). Test accuracy: 71.4% | Balanced accuracy: 52.9%"
     ),
@@ -135,4 +136,6 @@ def predict_bimodal(
     except Exception as e:
         raise HTTPException(500, f"Inference error: {e}")
 
+    result["model"] += " (Legacy Scalar Experiment)"
+    
     return PredictionResponse(subject_id=request.subject_id, **result)

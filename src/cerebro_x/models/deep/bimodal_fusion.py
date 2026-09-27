@@ -1,27 +1,18 @@
-"""Bimodal Fusion Model — Clinical GRU + MRI Scalar Encoder — Phase 5.
+"""Bimodal Fusion Model — Clinical GRU + MRI Scalar Encoder.
 
-STATUS: IMPLEMENTED — trained on real OASIS-2 clinical + MRI-derived scalar data.
+STATUS: 
+1. LegacyScalarBimodalCerebroNet: IMPLEMENTED — trained on real OASIS-2 clinical + MRI-derived scalar data.
+2. RealBimodalCerebroNet: SCAFFOLD — Architecture available, but checkpoint unavailable.
 
-Architecture:
-    Clinical Visit History (seq)
-        ↓
-    ClinicalGRUEncoder (GRU, hidden_dim=64) → clinical_embedding (64-dim)
+Architecture (Legacy):
+    Clinical Visit History (seq) -> ClinicalGRUEncoder (GRU, hidden_dim=64) -> clinical_embedding (64-dim)
+    MRI Scalars [nWBV, eTIV, ASF, nwbv_delta] -> MRIScalarEncoder (MLP) -> mri_embedding (32-dim)
+    [clinical_embedding ‖ mri_embedding] -> Z_t (96-dim brain state vector) -> Fusion Head (MLP) -> logits
 
-    MRI Scalars [nWBV, eTIV, ASF, nwbv_delta]
-        ↓
-    MRIScalarEncoder (MLP) → mri_embedding (32-dim)
-
-    [clinical_embedding ‖ mri_embedding] → Z_t (96-dim brain state vector)
-        ↓
-    Fusion Head (MLP) → num_classes logits
-
-The 96-dim vector Z_t IS the Digital Brain Twin representation for
-the bimodal (Clinical + MRI) configuration.
-
-Used in ablation study:
-    - Clinical Only  : ClinicalGRUEncoder → head
-    - MRI Only       : MRIScalarEncoder   → head
-    - Clinical + MRI : BimodalCerebroNet  → head
+Architecture (Real):
+    Clinical Visit History (seq) -> ClinicalGRUEncoder -> 64-dim
+    Raw NIfTI MRI -> Lightweight3DCNN -> 64-dim
+    [clinical_embedding ‖ mri_embedding] -> Z_t (128-dim) -> Fusion Head (MLP) -> logits
 """
 from __future__ import annotations
 
@@ -201,3 +192,62 @@ class BimodalCerebroNet(nn.Module):
         """
         z_t = self.get_brain_state(clinical_seq, mri_scalars, lengths)
         return self.fusion_head(z_t)
+
+
+class RealBimodalCerebroNet(nn.Module):
+    """Real Bimodal Fusion Model — Clinical GRU + 3D CNN MRI Embedding.
+    
+    STATUS: SCAFFOLD — Architecture implemented. No trained checkpoint available.
+    
+    This is the intended real fusion model that combines the 64D clinical GRU
+    embedding with the 64D raw NIfTI 3D CNN embedding.
+    """
+    
+    def __init__(
+        self,
+        clinical_input_dim: int = 19,
+        clinical_hidden_dim: int = 64,
+        mri_embed_dim: int = 64,
+        num_classes: int = 4,
+        dropout: float = 0.3,
+    ):
+        super().__init__()
+        # Clinical Encoder (same as legacy)
+        self.clinical_encoder = ClinicalGRUEncoder(
+            input_dim=clinical_input_dim,
+            hidden_dim=clinical_hidden_dim,
+            dropout=dropout,
+        )
+        
+        # MRI Encoder is expected to be the Lightweight3DCNN (or similar),
+        # but here we just take its output embedding directly to avoid
+        # running the CNN multiple times in a forward pass if pre-extracted.
+        # Alternatively, we could instantiate the CNN here.
+        
+        fused_dim = clinical_hidden_dim + mri_embed_dim  # 64 + 64 = 128
+        
+        self.fusion_head = nn.Sequential(
+            nn.Linear(fused_dim, 64),
+            nn.BatchNorm1d(64),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(64, num_classes),
+        )
+        
+    def forward(
+        self,
+        clinical_seq: torch.Tensor,
+        lengths: torch.Tensor,
+        mri_embedding: torch.Tensor,
+    ) -> torch.Tensor:
+        """
+        Args:
+            clinical_seq: Padded visit history (batch, seq, features)
+            lengths: True sequence lengths
+            mri_embedding: 64D vector from the 3D CNN
+        """
+        clinical_emb = self.clinical_encoder(clinical_seq, lengths)
+        # Concatenate 64D + 64D -> 128D
+        z_t = torch.cat([clinical_emb, mri_embedding], dim=1)
+        return self.fusion_head(z_t)
+

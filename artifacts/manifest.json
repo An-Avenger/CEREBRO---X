@@ -6,10 +6,13 @@
     "clinical_gru": {
       "experiment_id": "EXP-LONGITUDINAL-001",
       "model_name": "TemporalCerebroNet",
+      "model_version": "1.0.0",
       "model_class": "cerebro_x.models.deep.temporal.TemporalCerebroNet",
-      "checkpoint": "artifacts/EXP-LONGITUDINAL-001/temporal_gru_cpu.pt",
+      "checkpoint_path": "artifacts/EXP-LONGITUDINAL-001/temporal_gru_cpu.pt",
+      "checkpoint_sha256": "e456a972148b86022c32a2fbd064a0d3d70a88740eca4dad97395c481550351f",
       "preprocessor": "artifacts/EXP-LONGITUDINAL-001/clinical_preprocessor.pkl",
       "dataset": "OASIS-2 Longitudinal",
+      "dataset_version": "OASIS-2 v1.0",
       "n_subjects": 150,
       "n_pairs": 223,
       "feature_count": 19,
@@ -20,12 +23,11 @@
         "prev_mmse", "prev_cdr", "prev_nwbv",
         "mmse_delta", "cdr_delta", "nwbv_delta"
       ],
-      "preprocessing": "SimpleImputer(median) + StandardScaler",
       "preprocessing_version": "1.0",
       "architecture": "GRU(input_dim=19, hidden=64, layers=1) → Linear(64, 4)",
       "num_classes": 4,
       "cdr_class_mapping": {"0": 0.0, "1": 0.5, "2": 1.0, "3": 2.0},
-      "split": "subject-level (train=70%, val=15%, test=15%, seed=42)",
+      "split": "subject-level (train=70%, val=15%, test=15%)",
       "metrics": {
         "test_accuracy": 0.75,
         "test_balanced_accuracy": 0.5566,
@@ -35,24 +37,34 @@
       "trained": true,
       "checkpoint_available": true,
       "clinically_validated": false,
-      "training_seed": 42
+      "training_seed": 42,
+      "python_version": "3.10",
+      "dependency_versions": {"torch": "2.1.0", "scikit-learn": "1.3.1"}
     },
     "bimodal_fusion": {
       "experiment_id": "EXP-FUSION-BIMODAL-001",
-      "model_name": "BimodalCerebroNet",
+      "model_name": "LegacyScalarBimodalCerebroNet",
+      "model_version": "1.0.0",
       "model_class": "cerebro_x.models.deep.bimodal_fusion.BimodalCerebroNet",
-      "checkpoint": "artifacts/EXP-FUSION-BIMODAL-001/clinical_plus_mri.pt",
+      "checkpoint_path": "artifacts/EXP-FUSION-BIMODAL-001/clinical_plus_mri.pt",
+      "checkpoint_sha256": "d480b88827e85e26efdf0a471614146a2476663fc37f75aabdfce721056a9382",
       "dataset": "OASIS-2 Longitudinal (clinical) + OASIS-2 MRI scalars",
-      "mri_note": "MRI branch uses OASIS-2 scalar features (nWBV, eTIV, ASF), NOT NIfTI CNN embeddings",
+      "mri_note": "LEGACY SCALAR EXPERIMENT. Uses OASIS-2 scalar features (nWBV, eTIV, ASF), NOT NIfTI CNN embeddings",
+      "split": "subject-level (train=70%, val=15%, test=15%)",
+      "metrics": {
+        "test_accuracy": 0.714,
+        "test_balanced_accuracy": 0.529
+      },
       "trained": true,
       "checkpoint_available": true,
-      "clinically_validated": false
+      "clinically_validated": false,
+      "python_version": "3.10"
     },
     "cnn3d": {
       "experiment_id": "EXP-MRI-CNN3D-001",
       "model_name": "Lightweight3DCNN",
       "model_class": "cerebro_x.models.deep.cnn3d.Lightweight3DCNN",
-      "checkpoint": "artifacts/EXP-MRI-CNN3D-001/cnn3d_cpu.pt",
+      "checkpoint_path": "artifacts/EXP-MRI-CNN3D-001/cnn3d_cpu.pt",
       "dataset": "ADNI/OASIS NIfTI — NOT YET AVAILABLE",
       "trained": false,
       "checkpoint_available": false,
@@ -62,17 +74,28 @@
     "eeg_encoder": {
       "experiment_id": "EXP-EEG-STANDALONE-001",
       "model_name": "EEGSpectralEncoder",
-      "checkpoint": "artifacts/EXP-EEG-STANDALONE-001/binary_encoder.pt",
+      "model_version": "1.0.1",
+      "checkpoint_path": "artifacts/EXP-EEG-STANDALONE-001/binary_encoder.pt",
+      "checkpoint_sha256": "2e11b306607d7c248a96124b59e7c232deeeb01357e3967a3533a85c2e21c63c",
       "dataset": "OpenNeuro ds004504 (87 subjects, separate from OASIS-2)",
+      "dataset_version": "v1.0",
       "task": "Binary: Disease (AD/FTD) vs Control",
       "patient_alignment": "NOT aligned with OASIS-2 subjects",
+      "split": "Stratified random (train=70%, val=15%, test=15%)",
+      "metrics": {
+        "test_accuracy": 0.500,
+        "test_balanced_accuracy": 0.478,
+        "test_f1_macro": 0.476
+      },
       "trained": true,
       "checkpoint_available": true,
-      "clinically_validated": false
+      "clinically_validated": false,
+      "python_version": "3.10"
     },
     "trimodal": {
       "status": "Architecture scaffold only",
       "trained": false,
+      "checkpoint_available": false,
       "note": "Research scaffold. No patient-aligned MRI+EEG+Clinical data. Do NOT report as real experiment."
     }
   },
