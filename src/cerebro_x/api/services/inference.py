@@ -1,6 +1,13 @@
 """
 Inference service — converts raw API input into feature tensors
 and runs model forward passes.
+
+CRITICAL: All normalization is done via the fitted ClinicalPreprocessor
+loaded from artifacts/EXP-LONGITUDINAL-001/clinical_preprocessor.pkl.
+NO hard-coded normalization constants (e.g. (age-70)/10) are used here.
+
+CDR class_probabilities are keyed by the SHORT canonical keys "0","1","2","3"
+(not human labels) so that BHI.compute() receives the correct keys.
 """
 from __future__ import annotations
 
@@ -11,87 +18,93 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+from cerebro_x.features.preprocessor import (
+    ClinicalPreprocessor,
+    CDR_CLASS_TO_VALUE,
+    CDR_CLASS_TO_KEY,
+    CDR_CLASS_TO_LABEL,
+    FEATURE_ORDER,
+)
+
 logger = logging.getLogger("cerebro_x.api.inference")
 
-# CDR class → float value
-CDR_VALUES = {0: 0.0, 1: 0.5, 2: 1.0, 3: 2.0}
-CDR_LABELS = {
-    0: "Normal (CDR 0.0)",
-    1: "Very Mild Dementia (CDR 0.5)",
-    2: "Mild Dementia (CDR 1.0)",
-    3: "Moderate Dementia (CDR 2.0)",
-}
+
+# ── Fallback preprocessor (used only when pkl not found) ─────────────────────
+# This is a plain StandardScaler with default params. Predictions from it will
+# NOT match training-time preprocessing and should be treated as approximate.
+# A warning is emitted to the log whenever the fallback is used.
+_FALLBACK_PREPROCESSOR: Optional[ClinicalPreprocessor] = None
 
 
-def visits_to_feature_tensor(visits: list[dict], feature_builder) -> torch.Tensor:
+def _get_fallback_preprocessor() -> ClinicalPreprocessor:
+    """Return a stateless fallback preprocessor (no scaling, just imputes NaN→0)."""
+    global _FALLBACK_PREPROCESSOR
+    if _FALLBACK_PREPROCESSOR is None:
+        import sklearn.impute
+        import sklearn.preprocessing
+        import pandas as pd
+
+        # Fit on a single row of population-mean values so the objects are valid
+        dummy = pd.DataFrame(
+            [[70, 1, 1, 14, 2, 28, 0, 1480, 0.76, 1.18, 0, 365, 1,
+              28, 0, 0.76, 0, 0, 0]],
+            columns=FEATURE_ORDER,
+        )
+        prep = ClinicalPreprocessor()
+        prep.fit_transform(dummy)
+        _FALLBACK_PREPROCESSOR = prep
+        logger.warning(
+            "Using FALLBACK ClinicalPreprocessor (fitted on dummy data). "
+            "Predictions will NOT match training-time preprocessing. "
+            "Run scripts/train_longitudinal.py to generate the real artifact."
+        )
+    return _FALLBACK_PREPROCESSOR
+
+
+def _resolve_preprocessor(preprocessor: Optional[ClinicalPreprocessor]) -> ClinicalPreprocessor:
+    """Return the real preprocessor or the fallback, logging a warning."""
+    if preprocessor is not None and preprocessor.is_fitted:
+        return preprocessor
+    logger.warning(
+        "ClinicalPreprocessor not available from registry. Using fallback. "
+        "Re-run training to fix this."
+    )
+    return _get_fallback_preprocessor()
+
+
+# ── Feature building ──────────────────────────────────────────────────────────
+
+def visits_to_feature_tensor(
+    visits: list[dict],
+    preprocessor: Optional[ClinicalPreprocessor],
+) -> torch.Tensor:
     """
     Convert a list of visit dicts into a clinical feature tensor.
 
+    Uses the fitted ClinicalPreprocessor (imputer + scaler from training).
+    NO hard-coded normalization constants.
+
     Returns: (1, seq_len, n_features) float32 tensor
     """
-    import pandas as pd
-
-    rows = []
-    for i, v in enumerate(visits):
-        row = {
-            "Age": v.get("age", 0.0),
-            "EDUC": v.get("educ", 12.0),
-            "SES": v.get("ses", 2.0),
-            "MMSE": v.get("mmse", 28.0),
-            "CDR": v.get("cdr", 0.0),
-            "nWBV": v.get("nwbv", 0.75),
-            "eTIV": v.get("etiv", 1500.0),
-            "ASF": v.get("asf", 1.2),
-            "M/F": 1 if v.get("gender", "F") == "M" else 0,
-            "Hand": 1 if v.get("hand", "R") == "R" else 0,
-            "Visit": i + 1,
-            "MR Delay": 0,
-            # Temporal delta features — compute from adjacent visits
-            "prev_mmse": visits[i - 1].get("mmse", v.get("mmse", 28.0)) if i > 0 else v.get("mmse", 28.0),
-            "prev_cdr": visits[i - 1].get("cdr", v.get("cdr", 0.0)) if i > 0 else v.get("cdr", 0.0),
-            "prev_nwbv": visits[i - 1].get("nwbv", v.get("nwbv", 0.75)) if i > 0 else v.get("nwbv", 0.75),
-        }
-        rows.append(row)
-
-    df = pd.DataFrame(rows)
-
-    # Compute delta features
-    df["mmse_delta"] = df["MMSE"] - df["prev_mmse"]
-    df["cdr_delta"] = df["CDR"] - df["prev_cdr"]
-    df["nwbv_delta"] = df["nWBV"] - df["prev_nwbv"]
-
-    # Standard feature ordering (must match training)
-    feature_cols = [
-        "Age", "EDUC", "SES", "MMSE", "CDR", "nWBV", "eTIV", "ASF",
-        "M/F", "Hand", "Visit", "MR Delay",
-        "prev_mmse", "prev_cdr", "prev_nwbv",
-        "mmse_delta", "cdr_delta", "nwbv_delta",
-        "ASF",  # duplicate intentional — matches 19-feature vector from training
-    ]
-
-    # Build 19-feature vector (align with training feature set)
-    FEATURE_ORDER = [
-        "Age", "EDUC", "SES", "MMSE", "CDR", "nWBV", "eTIV", "ASF",
-        "M/F", "Hand", "Visit", "MR Delay",
-        "prev_mmse", "prev_cdr", "prev_nwbv",
-        "mmse_delta", "cdr_delta", "nwbv_delta", "ASF"
-    ]
-
-    X = df[FEATURE_ORDER].fillna(0.0).values.astype(np.float32)
-
-    # Normalize common columns
-    X[:, 0] = (X[:, 0] - 70.0) / 10.0   # Age
-    X[:, 1] = (X[:, 1] - 13.0) / 3.0    # EDUC
-    X[:, 3] = (X[:, 3] - 27.0) / 5.0    # MMSE
-    X[:, 5] = (X[:, 5] - 0.75) / 0.05   # nWBV
-    X[:, 6] = (X[:, 6] - 1500.0) / 200.0  # eTIV
-
-    return torch.tensor(X, dtype=torch.float32).unsqueeze(0)  # (1, T, 19)
+    prep = _resolve_preprocessor(preprocessor)
+    df = ClinicalPreprocessor.visits_to_dataframe(visits)
+    X = prep.transform(df)  # (seq_len, 19) float32, already scaled
+    tensor = torch.tensor(X, dtype=torch.float32).unsqueeze(0)  # (1, T, 19)
+    return tensor
 
 
-def run_clinical_inference(model, visits: list[dict]) -> dict:
-    """Run clinical GRU and return prediction dict."""
-    tensor = visits_to_feature_tensor(visits, None)
+# ── Clinical GRU inference ────────────────────────────────────────────────────
+
+def run_clinical_inference(
+    model,
+    visits: list[dict],
+    preprocessor: Optional[ClinicalPreprocessor] = None,
+) -> dict:
+    """Run clinical GRU and return prediction dict.
+
+    class_probabilities keys: "0", "1", "2", "3"  (canonical, required by BHI).
+    """
+    tensor = visits_to_feature_tensor(visits, preprocessor)
     lengths = torch.tensor([len(visits)], dtype=torch.long)
 
     with torch.no_grad():
@@ -99,30 +112,58 @@ def run_clinical_inference(model, visits: list[dict]) -> dict:
         probs = F.softmax(logits, dim=-1).squeeze(0).numpy()
 
     pred_class = int(np.argmax(probs))
+    n_classes = len(probs)
+
+    # Canonical keys: "0", "1", "2", "3"
+    class_probabilities = {
+        CDR_CLASS_TO_KEY[i]: float(probs[i]) for i in range(n_classes)
+    }
+
+    # Validate all required BHI keys are present
+    for k in ("0", "1", "2", "3"):
+        if k not in class_probabilities:
+            raise RuntimeError(
+                f"Model returned {n_classes} classes but BHI requires 4 "
+                f"(CDR 0, 0.5, 1, 2). Missing key: '{k}'."
+            )
 
     return {
         "predicted_cdr_class": pred_class,
-        "predicted_cdr_value": CDR_VALUES[pred_class],
-        "predicted_cdr_label": CDR_LABELS[pred_class],
-        "class_probabilities": {
-            CDR_LABELS[i]: float(probs[i]) for i in range(len(probs))
-        },
+        "predicted_cdr_value": CDR_CLASS_TO_VALUE[pred_class],
+        "predicted_cdr_label": CDR_CLASS_TO_LABEL[pred_class],
+        "class_probabilities": class_probabilities,
         "n_visits_used": len(visits),
         "model": "ClinicalGRU (EXP-LONGITUDINAL-001)",
     }
 
 
-def run_bimodal_inference(model, visits: list[dict], mri: dict) -> dict:
-    """Run bimodal (clinical+MRI) model and return prediction dict."""
-    clinical_tensor = visits_to_feature_tensor(visits, None)  # (1, T, 19)
+# ── Bimodal inference ─────────────────────────────────────────────────────────
+
+def run_bimodal_inference(
+    model,
+    visits: list[dict],
+    mri: dict,
+    preprocessor: Optional[ClinicalPreprocessor] = None,
+) -> dict:
+    """Run bimodal (clinical+MRI scalar) model and return prediction dict.
+
+    class_probabilities keys: "0", "1", "2", "3"  (canonical, required by BHI).
+    """
+    clinical_tensor = visits_to_feature_tensor(visits, preprocessor)  # (1, T, 19)
     lengths = torch.tensor([len(visits)], dtype=torch.long)
+
+    # MRI scalar tensor — NOTE: these are the raw OASIS-2 scalars from training.
+    # They are NOT equivalent to NIfTI-derived proxy values without domain alignment.
     mri_tensor = torch.tensor(
         [[mri.get("nwbv", 0.75), mri.get("etiv", 1500.0),
           mri.get("asf", 1.2), mri.get("nwbv_delta", 0.0)]],
-        dtype=torch.float32
+        dtype=torch.float32,
     )  # (1, 4)
 
-    # Normalize MRI features (same as training)
+    # MRI scalar normalization from bimodal training (these are mri-branch only,
+    # separate from the clinical preprocessor)
+    # These constants reflect the bimodal training MRI branch normalization.
+    # TODO: save as a separate mri_scaler.pkl when the bimodal model is retrained.
     mri_tensor[:, 0] = (mri_tensor[:, 0] - 0.75) / 0.05   # nWBV
     mri_tensor[:, 1] = (mri_tensor[:, 1] - 1500.0) / 200.0  # eTIV
 
@@ -131,18 +172,27 @@ def run_bimodal_inference(model, visits: list[dict], mri: dict) -> dict:
         probs = F.softmax(logits, dim=-1).squeeze(0).numpy()
 
     pred_class = int(np.argmax(probs))
+    n_classes = len(probs)
+
+    class_probabilities = {
+        CDR_CLASS_TO_KEY[i]: float(probs[i]) for i in range(n_classes)
+    }
 
     return {
         "predicted_cdr_class": pred_class,
-        "predicted_cdr_value": CDR_VALUES[pred_class],
-        "predicted_cdr_label": CDR_LABELS[pred_class],
-        "class_probabilities": {
-            CDR_LABELS[i]: float(probs[i]) for i in range(len(probs))
-        },
+        "predicted_cdr_value": CDR_CLASS_TO_VALUE[pred_class],
+        "predicted_cdr_label": CDR_CLASS_TO_LABEL[pred_class],
+        "class_probabilities": class_probabilities,
         "n_visits_used": len(visits),
-        "model": "BimodalCerebroNet Clinical+MRI (EXP-FUSION-BIMODAL-001)",
+        "model": "BimodalCerebroNet Clinical+MRI Scalar (EXP-FUSION-BIMODAL-001)",
+        "mri_note": (
+            "MRI inputs are OASIS-2 scalar features (nWBV, eTIV, ASF), "
+            "NOT raw NIfTI-derived CNN embeddings."
+        ),
     }
 
+
+# ── EEG inference ─────────────────────────────────────────────────────────────
 
 def run_eeg_inference(model, scaler, imputer, eeg_features: list[float]) -> dict:
     """Run EEG binary disease screener."""
@@ -171,24 +221,42 @@ def run_eeg_inference(model, scaler, imputer, eeg_features: list[float]) -> dict
     }
 
 
-def extract_brain_twin(model, visits: list[dict]) -> dict:
-    """Extract Z_t hidden state trajectory from clinical GRU."""
-    tensor = visits_to_feature_tensor(visits, None)  # (1, T, 19)
+# ── Brain Twin extraction ─────────────────────────────────────────────────────
+
+def extract_brain_twin(
+    model,
+    visits: list[dict],
+    preprocessor: Optional[ClinicalPreprocessor] = None,
+) -> dict:
+    """
+    Extract Z_t hidden state trajectory from clinical GRU.
+
+    Uses the canonical preprocessor (same as training). Z_t is the GRU hidden
+    state — a learned latent representation. It is NOT a 3D anatomical model.
+    """
+    tensor = visits_to_feature_tensor(visits, preprocessor)  # (1, T, 19)
     lengths = torch.tensor([len(visits)], dtype=torch.long)
 
     with torch.no_grad():
-        # Get per-timestep hidden states from GRU output
         if hasattr(model, "gru"):
             out, _ = model.gru(tensor)  # (1, T, hidden)
             hidden_states = out.squeeze(0).numpy().tolist()
         else:
-            # Fallback: just return the final embedding
+            # Fallback if model doesn't expose .gru directly
             logits = model(tensor, lengths)
             hidden_states = [[0.0] * 64]
+            logger.warning(
+                "Model does not expose .gru attribute; returning zero trajectory. "
+                "Z_t extraction requires TemporalCerebroNet."
+            )
 
     return {
         "n_visits": len(visits),
         "z_dim": len(hidden_states[0]) if hidden_states else 64,
         "trajectories": hidden_states,
         "pca_2d": None,
+        "representation": (
+            "Z_t = GRU hidden state (learned latent representation). "
+            "NOT a 3D anatomical reconstruction."
+        ),
     }

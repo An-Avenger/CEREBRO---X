@@ -1,0 +1,27 @@
+{
+  "feature_order": [
+    "curr_age",
+    "sex",
+    "hand",
+    "educ",
+    "ses",
+    "curr_mmse",
+    "curr_cdr",
+    "curr_etiv",
+    "curr_nwbv",
+    "curr_asf",
+    "current_mr_delay",
+    "days_between_visits",
+    "n_prior_visits",
+    "prev_mmse",
+    "prev_cdr",
+    "prev_nwbv",
+    "mmse_delta",
+    "cdr_delta",
+    "nwbv_delta"
+  ],
+  "n_features": 19,
+  "imputer_strategy": "median",
+  "scaler_class": "StandardScaler",
+  "version": "1.0"
+}

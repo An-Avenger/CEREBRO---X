@@ -41,9 +41,13 @@ from cerebro_x.api.services.inference import (
     run_clinical_inference,
     run_bimodal_inference,
     visits_to_feature_tensor,
-    CDR_LABELS,
-    CDR_VALUES,
 )
+from cerebro_x.features.preprocessor import CDR_CLASS_TO_KEY, CDR_CLASS_TO_VALUE
+
+# Canonical probability keys ("0", "1", "2", "3")
+CDR_LABELS = CDR_CLASS_TO_KEY  # int -> "0"/"1"/"2"/"3"
+CDR_VALUES = CDR_CLASS_TO_VALUE  # int -> 0.0/0.5/1.0/2.0
+
 
 
 # ─── Fixtures ────────────────────────────────────────────────────────────────
@@ -378,12 +382,14 @@ class TestR008Determinism:
         assert result1["predicted_cdr_class"] == result2["predicted_cdr_class"] == result3["predicted_cdr_class"]
         assert result1["predicted_cdr_value"] == result2["predicted_cdr_value"]
 
-        for label in CDR_LABELS.values():
+        for i in CDR_LABELS:
+            label = CDR_LABELS[i]
             p1 = result1["class_probabilities"][label]
             p2 = result2["class_probabilities"][label]
             p3 = result3["class_probabilities"][label]
             assert abs(p1 - p2) < 1e-6, f"Non-deterministic prob for {label}: {p1} vs {p2}"
             assert abs(p1 - p3) < 1e-6, f"Non-deterministic prob for {label}: {p1} vs {p3}"
+
 
     def test_bimodal_is_deterministic(self, bimodal_model):
         visits = _standard_visits(2)

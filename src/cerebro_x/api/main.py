@@ -71,14 +71,20 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Allow all origins for local research use
+# CORS configuration — control via CORS_ALLOWED_ORIGINS env var (comma-separated).
+# Default: localhost only. Wildcard with allow_credentials is a security risk.
+import os as _os
+_cors_origins_raw = _os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3001")
+_cors_origins = [o.strip() for o in _cors_origins_raw.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_cors_origins,
+    allow_credentials=False,  # Never True with wildcard origins
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
+
 
 # ─── Routers ─────────────────────────────────────────────────────────────────
 

@@ -1,6 +1,9 @@
 """
 Router: Digital Brain Twin endpoints.
 Exposes Z_t trajectory extraction from the clinical GRU.
+
+Z_t is the GRU hidden state — a learned latent representation of cognitive
+state from clinical visit history. It is NOT a 3D anatomical reconstruction.
 """
 from __future__ import annotations
 
@@ -20,8 +23,9 @@ router = APIRouter(prefix="/brain-twin", tags=["Digital Brain Twin"])
     description=(
         "Extracts the per-visit latent brain state vectors (Z_t) from the clinical GRU's "
         "hidden states. Returns a trajectory of 64-dimensional vectors, one per visit. "
-        "Z_t represents a compressed, latent snapshot of cognitive state estimated from "
-        "clinical history. It is NOT a neuroimaging measurement."
+        "Z_t = GRU hidden state (learned latent representation). "
+        "NOT a neuroimaging measurement or 3D anatomical model. "
+        "Uses the same preprocessing as training (fitted ClinicalPreprocessor)."
     ),
 )
 def extract_twin(request: PredictionRequest, registry=Depends(get_registry)):
@@ -29,8 +33,11 @@ def extract_twin(request: PredictionRequest, registry=Depends(get_registry)):
         raise HTTPException(503, "Clinical GRU model not loaded.")
 
     visits = [v.model_dump() for v in request.visits]
+    preprocessor = registry.scalers.get("clinical_preprocessor")
     try:
-        result = extract_brain_twin(registry.models["clinical_gru"], visits)
+        result = extract_brain_twin(
+            registry.models["clinical_gru"], visits, preprocessor=preprocessor
+        )
     except Exception as e:
         raise HTTPException(500, f"Brain twin extraction error: {e}")
 

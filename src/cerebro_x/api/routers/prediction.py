@@ -5,7 +5,10 @@ Exposes clinical GRU and bimodal fusion models.
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
+from cerebro_x.api.database import get_db
+from cerebro_x.api.models import Patient, PredictionRecord
 from cerebro_x.api.schemas.patient import (
     PredictionRequest,
     BimodalPredictionRequest,
@@ -13,14 +16,10 @@ from cerebro_x.api.schemas.patient import (
 )
 from cerebro_x.api.services.model_loader import get_registry
 from cerebro_x.api.services.inference import run_clinical_inference, run_bimodal_inference
-from cerebro_x.models.nextgen import NextGenMultimodalModel
+from cerebro_x.features.preprocessor import CDR_CLASS_TO_VALUE, CDR_CLASS_TO_LABEL
 
 router = APIRouter(prefix="/predict", tags=["Prediction"])
 
-
-from sqlalchemy.orm import Session
-from cerebro_x.api.database import get_db
-from cerebro_x.api.models import Patient, PredictionRecord
 
 @router.post(
     "/clinical",
@@ -29,20 +28,24 @@ from cerebro_x.api.models import Patient, PredictionRecord
     description=(
         "Predicts the next-visit CDR class using the trained longitudinal GRU model "
         "(EXP-LONGITUDINAL-001). Accepts one or more chronological visit records. "
-        "Test accuracy: 75.0% | Balanced accuracy: 55.7%"
+        "Test accuracy: 75.0% | Balanced accuracy: 55.7% | Dataset: OASIS-2 (150 subjects)."
     ),
 )
 def predict_clinical(
-    request: PredictionRequest, 
+    request: PredictionRequest,
     registry=Depends(get_registry),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     if not registry.status.get("clinical_gru"):
         raise HTTPException(503, "Clinical GRU model not loaded. Check artifacts/EXP-LONGITUDINAL-001/")
 
     visits = [v.model_dump() for v in request.visits]
+    preprocessor = registry.scalers.get("clinical_preprocessor")
+
     try:
-        result = run_clinical_inference(registry.models["clinical_gru"], visits)
+        result = run_clinical_inference(
+            registry.models["clinical_gru"], visits, preprocessor=preprocessor
+        )
     except Exception as e:
         raise HTTPException(500, f"Inference error: {e}")
 
@@ -51,9 +54,8 @@ def predict_clinical(
     if not patient:
         patient = Patient(id=request.subject_id)
         db.add(patient)
-        
+
     last_visit = request.visits[-1]
-    
     record = PredictionRecord(
         patient_id=request.subject_id,
         age=last_visit.age,
@@ -69,75 +71,68 @@ def predict_clinical(
         predicted_cdr_label=result["predicted_cdr_label"],
         class_probabilities=result["class_probabilities"],
         apoe4=last_visit.apoe4,
-        p_tau=last_visit.p_tau
+        p_tau=last_visit.p_tau,
     )
     db.add(record)
     db.commit()
 
-    return PredictionResponse(
-        subject_id=request.subject_id,
-        **result,
-    )
+    return PredictionResponse(subject_id=request.subject_id, **result)
 
 
 @router.post(
     "/bimodal",
     response_model=PredictionResponse,
-    summary="Predict next-visit CDR (Clinical + MRI Bimodal Fusion)",
+    summary="Predict next-visit CDR (Clinical + MRI Scalar Bimodal Fusion)",
     description=(
         "Predicts the next-visit CDR class using the bimodal fusion model that combines "
         "clinical visit history (GRU) with MRI-derived scalars (nWBV, eTIV, ASF). "
+        "MRI inputs are OASIS-2 scalar features — NOT raw NIfTI CNN embeddings. "
         "(EXP-FUSION-BIMODAL-001). Test accuracy: 71.4% | Balanced accuracy: 52.9%"
     ),
 )
-def predict_bimodal(request: BimodalPredictionRequest, registry=Depends(get_registry)):
+def predict_bimodal(
+    request: BimodalPredictionRequest,
+    registry=Depends(get_registry),
+):
     if not registry.status.get("bimodal_fusion"):
         raise HTTPException(503, "Bimodal fusion model not loaded. Check artifacts/EXP-FUSION-BIMODAL-001/")
 
     visits = [v.model_dump() for v in request.visits]
     mri = request.mri.model_dump()
+    preprocessor = registry.scalers.get("clinical_preprocessor")
+
     try:
-        # Standard inference
-        result = run_bimodal_inference(registry.models["bimodal_fusion"], visits, mri)
-        
-        # Apply NextGen Biomarker Adjustment if provided
+        result = run_bimodal_inference(
+            registry.models["bimodal_fusion"], visits, mri, preprocessor=preprocessor
+        )
+
+        # Apply NextGen Biomarker Adjustment if provided (APOE4 / p-tau)
         last_visit = request.visits[-1]
         if last_visit.apoe4 is not None or last_visit.p_tau is not None:
-            # We use the raw outputs from the result and manually apply the shift
-            # to avoid rewriting the entire inference data loading pipeline
-            probs = result["class_probabilities"]
+            probs = dict(result["class_probabilities"])
             risk_multiplier = 1.0
             if last_visit.apoe4:
                 risk_multiplier += 0.15
             if last_visit.p_tau is not None and last_visit.p_tau > 21.7:
                 risk_multiplier += 0.20
-                
+
             if risk_multiplier > 1.0:
-                shift_amount = min(probs["0"] * (risk_multiplier - 1.0), probs["0"])
-                probs["0"] -= shift_amount
-                probs["1"] += shift_amount * 0.5
-                probs["2"] += shift_amount * 0.3
-                probs["3"] += shift_amount * 0.2
-                
-                # Re-normalize
+                shift = min(probs["0"] * (risk_multiplier - 1.0), probs["0"])
+                probs["0"] -= shift
+                probs["1"] += shift * 0.5
+                probs["2"] += shift * 0.3
+                probs["3"] += shift * 0.2
                 total = sum(probs.values())
                 probs = {k: v / total for k, v in probs.items()}
-                
-                cdr_values = {"0": 0.0, "1": 0.5, "2": 1.0, "3": 2.0}
-                cdr_labels = {"0": "Normal (CDR 0)", "1": "Very Mild (CDR 0.5)", "2": "Mild (CDR 1)", "3": "Moderate (CDR 2)"}
-                
+
                 pred_class_str = max(probs, key=probs.get)
-                pred_val = sum(probs[k] * cdr_values[k] for k in probs)
-                
-                result["predicted_cdr_class"] = int(pred_class_str)
-                result["predicted_cdr_value"] = pred_val
-                result["predicted_cdr_label"] = cdr_labels[pred_class_str]
+                pred_class = int(pred_class_str)
                 result["class_probabilities"] = probs
-                
+                result["predicted_cdr_class"] = pred_class
+                result["predicted_cdr_value"] = CDR_CLASS_TO_VALUE[pred_class]
+                result["predicted_cdr_label"] = CDR_CLASS_TO_LABEL[pred_class]
+
     except Exception as e:
         raise HTTPException(500, f"Inference error: {e}")
 
-    return PredictionResponse(
-        subject_id=request.subject_id,
-        **result,
-    )
+    return PredictionResponse(subject_id=request.subject_id, **result)

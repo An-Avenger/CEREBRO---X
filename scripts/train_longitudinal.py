@@ -228,6 +228,17 @@ def main():
     val_ds = SequenceDataset(val_df, imputer=train_ds.imputer, scaler=train_ds.scaler, is_train=False)
     test_ds = SequenceDataset(test_df, imputer=train_ds.imputer, scaler=train_ds.scaler, is_train=False)
 
+    # ── 4b. Save fitted preprocessor alongside model ──────────────────────────
+    # This is the canonical fitted object for API inference.
+    # inference.py loads this — never hardcodes normalization constants.
+    from cerebro_x.features.preprocessor import ClinicalPreprocessor
+    preprocessor = ClinicalPreprocessor()
+    preprocessor.imputer = train_ds.imputer
+    preprocessor.scaler  = train_ds.scaler
+    preprocessor.is_fitted = True
+    preprocessor.save(artifact_dir)
+    logger.info("ClinicalPreprocessor saved to %s", artifact_dir)
+
     logger.info("Sequence datasets: train=%d, val=%d, test=%d",
                 len(train_ds), len(val_ds), len(test_ds))
 

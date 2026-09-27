@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cerebro X - Digital Brain Twin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="background-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+    </div>
+    
+    <header class="glass-panel">
+        <h1>Cerebro X <span>Research</span></h1>
+        <div class="status-indicator" id="api-status">
+            <span class="dot"></span>
+            <span class="text">Connecting...</span>
+        </div>
+    </header>
+
+    <main class="dashboard">
+        <!-- Patient Input Form -->
+        <section class="glass-panel panel-input">
+            <h2>Patient Data Input</h2>
+            <form id="patient-form">
+                <div class="input-grid">
+                    <div class="form-group"><label>Subject ID</label><input type="text" id="subject_id" value="OAS2_0001" required></div>
+                    <div class="form-group"><label>Age</label><input type="number" step="0.1" id="age" value="72.0" required></div>
+                    <div class="form-group"><label>Education</label><input type="number" step="1" id="educ" value="16.0" required></div>
+                    <div class="form-group"><label>SES</label><input type="number" step="1" id="ses" value="2.0" required></div>
+                    <div class="form-group"><label>MMSE</label><input type="number" step="1" id="mmse" value="29.0" required></div>
+                    <div class="form-group"><label>CDR</label><input type="number" step="0.5" id="cdr" value="0.0" required></div>
+                    <div class="form-group"><label>nWBV</label><input type="number" step="0.001" id="nwbv" value="0.763" required></div>
+                    <div class="form-group"><label>eTIV</label><input type="number" step="1" id="etiv" value="1480.0" required></div>
+                    <div class="form-group"><label>ASF</label><input type="number" step="0.01" id="asf" value="1.23" required></div>
+                </div>
+                <button type="submit" class="btn-primary">Run Prediction & Extract Twin</button>
+            </form>
+        </section>
+
+        <!-- Patient History -->
+        <section class="glass-panel panel-history">
+            <h2>Patient History <button id="btn-load-history" class="btn-small" style="float: right;">Load</button></h2>
+            <div id="history-container" class="history-list">
+                <div class="result-placeholder">Enter Subject ID and click Load</div>
+            </div>
+        </section>
+
+        <!-- Prediction Result -->
+        <section class="glass-panel panel-prediction">
+            <h2>Next-Visit CDR Prediction</h2>
+            <div id="prediction-result" class="result-placeholder">Run a prediction to see results</div>
+            <div id="probabilities-container"></div>
+        </section>
+
+        <!-- Brain Twin Trajectory -->
+        <section class="glass-panel panel-twin">
+            <h2>Digital Brain Twin (Z<sub>t</sub> Trajectory)</h2>
+            <div class="chart-container">
+                <canvas id="twinChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Experiments Leaderboard -->
+        <section class="glass-panel panel-experiments">
+            <h2>AI Experiments Leaderboard</h2>
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Phase</th>
+                        <th>Experiment ID</th>
+                        <th>Model/Modality</th>
+                        <th>Accuracy</th>
+                        <th>Balanced Acc</th>
+                    </tr>
+                </thead>
+                <tbody id="experiments-body">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>

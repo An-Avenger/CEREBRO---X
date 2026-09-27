@@ -48,13 +48,16 @@ class ModelRegistry:
         logger.info("Model registry loaded. Status: %s", self.status)
 
     def _load_clinical_gru(self) -> None:
-        """Load TemporalCerebroNet (Phase 2 / Phase 7 GRU)."""
+        """Load TemporalCerebroNet (Phase 2 / Phase 7 GRU) + fitted ClinicalPreprocessor."""
         try:
             import sys
             sys.path.insert(0, str(Path("src")))
             from cerebro_x.models.deep.temporal import TemporalCerebroNet
+            from cerebro_x.features.preprocessor import ClinicalPreprocessor
 
             checkpoint_path = ARTIFACTS_DIR / "EXP-LONGITUDINAL-001" / "temporal_gru_cpu.pt"
+            artifact_dir = ARTIFACTS_DIR / "EXP-LONGITUDINAL-001"
+
             if not checkpoint_path.exists():
                 logger.warning("Clinical GRU checkpoint not found: %s", checkpoint_path)
                 self.status["clinical_gru"] = False
@@ -67,12 +70,28 @@ class ModelRegistry:
             model.load_state_dict(torch.load(checkpoint_path, map_location="cpu", weights_only=True))
             model.eval()
             self.models["clinical_gru"] = model
+
+            # Load the fitted preprocessor (imputer + scaler from training)
+            try:
+                preprocessor = ClinicalPreprocessor.load(artifact_dir)
+                self.scalers["clinical_preprocessor"] = preprocessor
+                logger.info("ClinicalPreprocessor loaded from %s", artifact_dir)
+            except FileNotFoundError:
+                logger.warning(
+                    "clinical_preprocessor.pkl not found in %s. "
+                    "Inference will use fallback preprocessor. "
+                    "Re-run scripts/train_longitudinal.py to generate it.",
+                    artifact_dir,
+                )
+                self.scalers["clinical_preprocessor"] = None
+
             self.status["clinical_gru"] = True
             logger.info("Clinical GRU loaded from %s", checkpoint_path)
 
         except Exception as e:
             logger.error("Failed to load Clinical GRU: %s", e)
             self.status["clinical_gru"] = False
+
 
     def _load_bimodal_fusion(self) -> None:
         """Load BimodalCerebroNet (Phase 5)."""

@@ -1,0 +1,92 @@
+{
+  "manifest_version": "1.0",
+  "generated_by": "Cerebro X",
+  "description": "Canonical artifact manifest for Cerebro X models and preprocessing.",
+  "models": {
+    "clinical_gru": {
+      "experiment_id": "EXP-LONGITUDINAL-001",
+      "model_name": "TemporalCerebroNet",
+      "model_class": "cerebro_x.models.deep.temporal.TemporalCerebroNet",
+      "checkpoint": "artifacts/EXP-LONGITUDINAL-001/temporal_gru_cpu.pt",
+      "preprocessor": "artifacts/EXP-LONGITUDINAL-001/clinical_preprocessor.pkl",
+      "dataset": "OASIS-2 Longitudinal",
+      "n_subjects": 150,
+      "n_pairs": 223,
+      "feature_count": 19,
+      "feature_list": [
+        "curr_age", "sex", "hand", "educ", "ses",
+        "curr_mmse", "curr_cdr", "curr_etiv", "curr_nwbv", "curr_asf",
+        "current_mr_delay", "days_between_visits", "n_prior_visits",
+        "prev_mmse", "prev_cdr", "prev_nwbv",
+        "mmse_delta", "cdr_delta", "nwbv_delta"
+      ],
+      "preprocessing": "SimpleImputer(median) + StandardScaler",
+      "preprocessing_version": "1.0",
+      "architecture": "GRU(input_dim=19, hidden=64, layers=1) → Linear(64, 4)",
+      "num_classes": 4,
+      "cdr_class_mapping": {"0": 0.0, "1": 0.5, "2": 1.0, "3": 2.0},
+      "split": "subject-level (train=70%, val=15%, test=15%, seed=42)",
+      "metrics": {
+        "test_accuracy": 0.75,
+        "test_balanced_accuracy": 0.5566,
+        "test_f1_macro": 0.5512,
+        "test_mae": 0.1607
+      },
+      "trained": true,
+      "checkpoint_available": true,
+      "clinically_validated": false,
+      "training_seed": 42
+    },
+    "bimodal_fusion": {
+      "experiment_id": "EXP-FUSION-BIMODAL-001",
+      "model_name": "BimodalCerebroNet",
+      "model_class": "cerebro_x.models.deep.bimodal_fusion.BimodalCerebroNet",
+      "checkpoint": "artifacts/EXP-FUSION-BIMODAL-001/clinical_plus_mri.pt",
+      "dataset": "OASIS-2 Longitudinal (clinical) + OASIS-2 MRI scalars",
+      "mri_note": "MRI branch uses OASIS-2 scalar features (nWBV, eTIV, ASF), NOT NIfTI CNN embeddings",
+      "trained": true,
+      "checkpoint_available": true,
+      "clinically_validated": false
+    },
+    "cnn3d": {
+      "experiment_id": "EXP-MRI-CNN3D-001",
+      "model_name": "Lightweight3DCNN",
+      "model_class": "cerebro_x.models.deep.cnn3d.Lightweight3DCNN",
+      "checkpoint": "artifacts/EXP-MRI-CNN3D-001/cnn3d_cpu.pt",
+      "dataset": "ADNI/OASIS NIfTI — NOT YET AVAILABLE",
+      "trained": false,
+      "checkpoint_available": false,
+      "clinically_validated": false,
+      "status": "Architecture implemented. No trained checkpoint. Requires NIfTI dataset."
+    },
+    "eeg_encoder": {
+      "experiment_id": "EXP-EEG-STANDALONE-001",
+      "model_name": "EEGSpectralEncoder",
+      "checkpoint": "artifacts/EXP-EEG-STANDALONE-001/binary_encoder.pt",
+      "dataset": "OpenNeuro ds004504 (87 subjects, separate from OASIS-2)",
+      "task": "Binary: Disease (AD/FTD) vs Control",
+      "patient_alignment": "NOT aligned with OASIS-2 subjects",
+      "trained": true,
+      "checkpoint_available": true,
+      "clinically_validated": false
+    },
+    "trimodal": {
+      "status": "Architecture scaffold only",
+      "trained": false,
+      "note": "Research scaffold. No patient-aligned MRI+EEG+Clinical data. Do NOT report as real experiment."
+    }
+  },
+  "reproducibility": {
+    "steps": [
+      "git clone https://github.com/An-Avenger/CEREBRO---X",
+      "pip install -r requirements.txt",
+      "python scripts/build_pairs.py  # generates data/processed/next_visit_pairs.csv",
+      "python scripts/train_longitudinal.py  # trains GRU + saves preprocessor",
+      "python scripts/save_preprocessor.py  # regenerates preprocessor pkl if needed",
+      "uvicorn cerebro_x.api.main:app --reload  # from src/"
+    ],
+    "data_required": [
+      "OASIS-2 longitudinal CSV (oasis_longitudinal.csv) — publicly available at oasis-brains.org"
+    ]
+  }
+}
