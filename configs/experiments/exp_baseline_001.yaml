@@ -1,0 +1,99 @@
+# =============================================================================
+# Cerebro X — Experiment Configuration Template
+# Experiment: EXP-BASELINE-001
+# Model: Majority-class + Logistic Regression baselines
+# Target: next-visit CDR (multiclass ordinal)
+# =============================================================================
+
+experiment_id: "EXP-BASELINE-001"
+description: "First baseline suite — majority class, logistic regression on next-visit CDR"
+
+# Dataset
+dataset: "oasis2_kaggle"
+dataset_version_note: "Kaggle jboysen/mri-and-alzheimers, downloaded August 2026"
+
+# Reproducibility
+seed: 42
+note: >
+  Seeds must be set in numpy, sklearn (random_state), and any other stochastic component.
+
+# Splitting strategy
+split:
+  strategy: "subject_level_holdout_then_cv"
+  test_size: 0.15       # ~22-23 subjects held out as final test
+  val_size: 0.15        # ~22-23 subjects for validation (within CV)
+  n_cv_folds: 5
+  group_col: "Subject ID"
+  # Note: with 150 subjects, each CV fold has ~25-26 subjects.
+  # Report class distribution per fold — do not hide imbalance.
+
+# Prediction target
+target:
+  name: "next_CDR"
+  type: "multiclass_ordinal"
+  classes: [0.0, 0.5, 1.0, 2.0]
+  note: >
+    next_CDR is the CDR value at the immediately following visit for each subject.
+    It must NEVER appear in the input feature matrix.
+
+# Feature groups
+features:
+  use_static_demographic: true
+  use_clinical_state: true
+  use_volumetric: true
+  use_timing: true
+  use_temporal_engineered: true
+
+# Models in this experiment
+models:
+  - name: "majority_class_baseline"
+    type: "DummyClassifier"
+    params:
+      strategy: "most_frequent"
+
+  - name: "logistic_regression_baseline"
+    type: "LogisticRegression"
+    params:
+      max_iter: 1000
+      multi_class: "multinomial"
+      solver: "lbfgs"
+      C: 1.0
+      class_weight: "balanced"
+
+  - name: "random_forest_baseline"
+    type: "RandomForestClassifier"
+    params:
+      n_estimators: 100
+      max_depth: null
+      class_weight: "balanced"
+      random_state: 42
+
+# Evaluation metrics
+metrics:
+  primary: "balanced_accuracy"
+  report_all:
+    - accuracy
+    - balanced_accuracy
+    - macro_precision
+    - macro_recall
+    - macro_f1
+    - weighted_f1
+    - cohen_kappa
+    - mean_absolute_error_ordinal   # ordinal-sensitive
+    - confusion_matrix
+    - per_class_report
+
+# Artifacts output
+artifacts:
+  base_dir: "artifacts/EXP-BASELINE-001"
+  save_model: true
+  save_preprocessor: true
+  save_feature_schema: true
+  save_label_mapping: true
+  save_cv_metrics: true
+  save_test_metrics: true
+  save_predictions: true
+  save_confusion_matrix_plot: true
+  save_feature_importance_plot: true
+  save_environment: true
+  save_experiment_config: true

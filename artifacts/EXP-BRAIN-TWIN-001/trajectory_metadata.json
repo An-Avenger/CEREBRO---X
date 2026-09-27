@@ -1,0 +1,24 @@
+{
+  "experiment_id": "EXP-BRAIN-TWIN-001",
+  "phase": 6,
+  "description": "Digital Brain Twin \u2014 Z_t trajectory extraction from clinical GRU",
+  "model_checkpoint": "artifacts\\EXP-LONGITUDINAL-001\\temporal_gru_cpu.pt",
+  "z_t_definition": "Z_t is the GRU final hidden state h_n[-1] of shape (64,) after processing clinical visit history up to time t. See DOCS/DIGITAL_BRAIN_TWIN_SPECIFICATION.md for formal definition.",
+  "hidden_dim": 64,
+  "num_patients": 150,
+  "trajectory_lengths": {
+    "min": 1,
+    "max": 4,
+    "mean": 1.4866666666666666
+  },
+  "split_breakdown": {
+    "train_patients": 106,
+    "val_patients": 22,
+    "test_patients": 22
+  },
+  "outputs": {
+    "per_patient_npy": "artifacts\\EXP-BRAIN-TWIN-001\\per_patient",
+    "pca_plot": "artifacts\\EXP-BRAIN-TWIN-001\\plots\\brain_twin_Z_trajectories_PCA.png",
+    "heatmap": "artifacts\\EXP-BRAIN-TWIN-001\\plots\\brain_twin_Z_heatmap.png"
+  }
+}

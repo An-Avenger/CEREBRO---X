@@ -1,0 +1,80 @@
+# =============================================================================
+# Cerebro X — OASIS-2 Kaggle Dataset Configuration
+#
+# Source: https://www.kaggle.com/datasets/jboysen/mri-and-alzheimers
+# File: oasis_longitudinal.csv
+#
+# VERIFIED facts (from dataset inspection, August 2026):
+#   - 373 rows, 15 columns
+#   - 150 unique subjects
+#   - visit range: 2–5 visits per subject
+# =============================================================================
+
+dataset_id: "oasis2_kaggle"
+dataset_name: "OASIS-2 Longitudinal MRI and Alzheimer's"
+source: "Kaggle: jboysen/mri-and-alzheimers"
+file: "oasis_longitudinal.csv"
+dataset_note: >
+  This is OASIS-2 longitudinal CLINICAL and DERIVED MRI metadata (CSV).
+  It is NOT the OASIS-3 full multimodal dataset.
+  It does NOT contain raw MRI image files — only derived volumetric measures (eTIV, nWBV, ASF).
+
+# Local path — override per environment
+# In Kaggle: /kaggle/input/mri-and-alzheimers/oasis_longitudinal.csv
+# Locally:   data/raw/oasis_longitudinal.csv
+local_path: "data/raw/oasis_longitudinal.csv"
+kaggle_glob: "**/oasis_longitudinal.csv"
+
+# Verified schema (do not add/remove columns without re-verifying against actual data)
+columns:
+  subject_id: "Subject ID"
+  mri_id: "MRI ID"
+  group: "Group"
+  visit: "Visit"
+  mr_delay: "MR Delay"
+  sex: "M/F"
+  hand: "Hand"
+  age: "Age"
+  educ: "EDUC"
+  ses: "SES"
+  mmse: "MMSE"
+  cdr: "CDR"
+  etiv: "eTIV"
+  nwbv: "nWBV"
+  asf: "ASF"
+
+# Verified cohort facts (from August 2026 inspection — update if data changes)
+verified_facts:
+  total_rows: 373
+  total_columns: 15
+  unique_subjects: 150
+  visit_distribution:
+    "2": 94
+    "3": 43
+    "4": 9
+    "5": 4
+  group_distribution:
+    Nondemented: 190
+    Demented: 146
+    Converted: 37
+  cdr_distribution:
+    0.0: 206
+    0.5: 123
+    1.0: 41
+    2.0: 3
+  mmse_stats:
+    count: 371
+    mean: 27.34
+    std: 3.68
+    min: 4
+    max: 30
+  subjects_with_changing_cdr: 34
+
+# What is NOT in this dataset
+not_available:
+  - "raw MRI image files"
+  - "EEG data"
+  - "PET data"
+  - "genetic data"
+  - "FreeSurfer parcellation files"
+  - "ADNI data"

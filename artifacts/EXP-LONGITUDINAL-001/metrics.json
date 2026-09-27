@@ -1,0 +1,28 @@
+{
+  "experiment_id": "EXP-LONGITUDINAL-001",
+  "phase": 5,
+  "dataset": "data/processed/next_visit_pairs.csv",
+  "total_pairs": 223,
+  "train_samples": 160,
+  "val_samples": 35,
+  "test_samples": 28,
+  "input_features": 19,
+  "seed": 42,
+  "phase_3_baseline_balanced_accuracy": 0.72,
+  "models": {
+    "last_visit_baseline": {
+      "accuracy": 0.7142857142857143,
+      "balanced_accuracy": 0.5367965367965368,
+      "f1_macro": 0.5401515151515152,
+      "mae": 0.17857142857142858,
+      "test_loss": 0.7575483322143555
+    },
+    "temporal_gru": {
+      "accuracy": 0.75,
+      "balanced_accuracy": 0.5566378066378066,
+      "f1_macro": 0.5511857707509882,
+      "mae": 0.16071428571428573,
+      "test_loss": 0.6441011258534023
+    }
+  }
+}

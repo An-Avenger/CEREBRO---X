@@ -1,0 +1,71 @@
+{
+  "project_name": "Cerebro X",
+  "description": "AI-Based Digital Brain Twin for Predicting Neurological Disease Progression Using MRI, EEG and Clinical Data",
+  "frontend": {
+    "framework": "Next.js (React)",
+    "language": "TypeScript / JavaScript",
+    "styling": "CSS (globals.css, page.module.css)",
+    "key_components": [
+      "DashboardWidget.tsx",
+      "Sidebar.tsx",
+      "page.tsx",
+      "layout.tsx"
+    ],
+    "status": "IMPLEMENTED"
+  },
+  "backend": {
+    "framework": "FastAPI",
+    "language": "Python 3.10+",
+    "api_entry": "src/cerebro_x/api/main.py",
+    "database": "SQLite (cerebro_x.db) using SQLAlchemy",
+    "key_routers": [
+      "prediction",
+      "brain_twin",
+      "experiments",
+      "eeg",
+      "history",
+      "mri_upload",
+      "patient",
+      "explain"
+    ],
+    "status": "IMPLEMENTED"
+  },
+  "database": {
+    "technology": "SQLite via SQLAlchemy",
+    "file": "cerebro_x.db",
+    "status": "IMPLEMENTED"
+  },
+  "ml": {
+    "frameworks": ["PyTorch", "Scikit-Learn"],
+    "components": [
+      "Clinical GRU Model",
+      "Bimodal Model (Clinical + MRI)",
+      "EEG Binary Screener",
+      "Digital Brain Twin (Z_t trajectory extraction)",
+      "Explainability (SHAP)"
+    ],
+    "status": "IMPLEMENTED"
+  },
+  "datasets": {
+    "referenced": [
+      "OASIS-2 Longitudinal (150 subjects)",
+      "OpenNeuro ds004504 (87 EEG subjects)"
+    ]
+  },
+  "demo_flow": [
+    "Start backend with docker-compose or run.ps1",
+    "Start frontend via npm run dev or docker-compose",
+    "Navigate to localhost:3000",
+    "Upload Clinical / MRI / EEG data via Dashboard",
+    "View Brain Twin extraction and disease progression prediction"
+  ],
+  "dependencies": {
+    "backend": ["fastapi", "uvicorn", "sqlalchemy", "torch", "pandas", "numpy", "scikit-learn", "shap", "monai", "nibabel"],
+    "frontend": ["next", "react", "react-dom"]
+  },
+  "commands": [
+    "docker-compose up -d --build",
+    "./run.ps1",
+    "./stop.ps1"
+  ]
+}

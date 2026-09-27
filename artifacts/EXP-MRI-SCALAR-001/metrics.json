@@ -1,0 +1,26 @@
+{
+  "experiment_id": "EXP-MRI-SCALAR-001",
+  "phase": 3,
+  "description": "MRI-Derived Scalar Branch \u2014 standalone experiment",
+  "modality": "MRI-derived scalars (nWBV, eTIV, ASF, nwbv_delta)",
+  "dataset": "OASIS-2 Kaggle CSV",
+  "features": [
+    "curr_nwbv",
+    "curr_etiv",
+    "curr_asf",
+    "nwbv_delta"
+  ],
+  "train_samples": 160,
+  "val_samples": 35,
+  "test_samples": 28,
+  "seed": 42,
+  "model": "MRIScalarClassifier (MLP)",
+  "test_metrics": {
+    "accuracy": 0.35714285714285715,
+    "balanced_accuracy": 0.2763347763347763,
+    "f1_macro": 0.2634575569358178,
+    "f1_weighted": 0.3459775214433599,
+    "mae": 0.4642857142857143
+  },
+  "note": "MRI features are derived scalar measurements (FreeSurfer outputs) from OASIS-2, NOT raw 3D MRI volumes. This is the maximum MRI information available in the OASIS-2 Kaggle dataset."
+}

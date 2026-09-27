@@ -1,0 +1,6 @@
+build:
+  docker:
+    web: Dockerfile
+    worker: Dockerfile
+run:
+  web: uvicorn cerebro_x.api.main:app --host 0.0.0.0 --port $PORT

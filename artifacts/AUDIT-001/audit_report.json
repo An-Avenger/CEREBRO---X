@@ -1,0 +1,78 @@
+{
+  "total_rows": 373,
+  "total_columns": 15,
+  "unique_subjects": 150,
+  "visits_per_subject": {
+    "2": 94,
+    "3": 43,
+    "4": 9,
+    "5": 4
+  },
+  "visit_stats": {
+    "min": 2,
+    "max": 5,
+    "mean": 2.49,
+    "total_visits": 373
+  },
+  "missingness": {
+    "SES": 5.09,
+    "MMSE": 0.54
+  },
+  "group_distribution": {
+    "Nondemented": 190,
+    "Demented": 146,
+    "Converted": 37
+  },
+  "cdr_distribution": {
+    "0.0": 206,
+    "0.5": 123,
+    "1.0": 41,
+    "2.0": 3
+  },
+  "mmse_stats": {
+    "count": 371,
+    "missing": 2,
+    "mean": 27.34,
+    "std": 3.68,
+    "min": 4.0,
+    "max": 30.0,
+    "25th_pct": 27.0,
+    "median": 29.0,
+    "75th_pct": 30.0
+  },
+  "subjects_with_changing_cdr": 34,
+  "cdr_change_distribution": {
+    "-0.5": 5,
+    "0.0": 187,
+    "0.5": 28,
+    "1.0": 3
+  },
+  "verified_comparison": {
+    "total_rows": {
+      "actual": 373,
+      "expected": 373,
+      "match": true
+    },
+    "total_columns": {
+      "actual": 15,
+      "expected": 15,
+      "match": true
+    },
+    "unique_subjects": {
+      "actual": 150,
+      "expected": 150,
+      "match": true
+    },
+    "subjects_with_changing_cdr": {
+      "actual": 34,
+      "expected": 34,
+      "match": true
+    },
+    "mmse_count": {
+      "actual": 371,
+      "expected": 371,
+      "match": true
+    }
+  },
+  "warnings": []
+}

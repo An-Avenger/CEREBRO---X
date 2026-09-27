@@ -1,0 +1,37 @@
+{
+  "experiment_id": "EXP-EEG-STANDALONE-001",
+  "phase": 4,
+  "dataset": "OpenNeuro ds004504 \u2014 Miltiadous et al. (2023)",
+  "citation": "Miltiadous A, et al. (2023). A Dataset of Scalp EEG Recordings of Alzheimer's Disease, Frontotemporal Dementia and Healthy Subjects. Data, 8(6), 95.",
+  "subjects": 87,
+  "eeg_features": [
+    "Fp1_delta",
+    "Fp1_theta",
+    "Fp1_alpha",
+    "Fp1_beta",
+    "Fp1_gamma",
+    "Fp2_delta",
+    "Fp2_theta",
+    "Fp2_alpha",
+    "Fp2_beta",
+    "Fp2_gamma"
+  ],
+  "n_features_total": 107,
+  "critical_limitation": "STANDALONE ENCODER ONLY. This model is trained on a DIFFERENT PATIENT COHORT than OASIS-2. Patient-level fusion with OASIS-2 clinical data is NOT possible without a dataset that has both EEG and OASIS-2 clinical records for the same patients. See DOCS/EEG_LIMITATION.md for full explanation.",
+  "3class_AD_FTD_Control": {
+    "accuracy": 0.4444444444444444,
+    "balanced_accuracy": 0.47301587301587306,
+    "f1_macro": 0.4447415329768271,
+    "f1_weighted": 0.4387997623291741,
+    "n_test": 18,
+    "n_train": 69
+  },
+  "binary_disease_vs_control": {
+    "accuracy": 0.7777777777777778,
+    "balanced_accuracy": 0.6666666666666666,
+    "f1_macro": 0.6785714285714286,
+    "f1_weighted": 0.738095238095238,
+    "n_test": 18,
+    "n_train": 69
+  }
+}

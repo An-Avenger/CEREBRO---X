@@ -1,0 +1,111 @@
+# =============================================================================
+# Cerebro X — .gitignore
+# NEVER commit raw datasets, credentials, or model weights.
+# =============================================================================
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+.Python
+
+# ── Virtual environments ───────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.env
+.env.*
+
+# ── Jupyter ────────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ── Dataset files — NEVER COMMIT ──────────────────────────────────────────────
+data/raw/
+data/interim/
+data/processed/
+
+# MRI / imaging files
+*.nii
+*.nii.gz
+*.dcm
+*.mgh
+*.mgz
+*.img
+*.hdr
+*.mnc
+*.brainvisa
+
+# Archive files (dataset downloads)
+*.zip
+*.tar
+*.tar.gz
+*.tar.bz2
+*.gz
+
+# ── Model weights — NEVER COMMIT (use artifact storage) ──────────────────────
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.safetensors
+*.onnx
+
+# ── Credentials / secrets — NEVER COMMIT ─────────────────────────────────────
+credentials/
+secrets/
+*.pem
+*.key
+*.token
+.netrc
+kaggle.json
+
+# ── Large artifact outputs (keep configs/metrics, exclude weights/images) ─────
+artifacts/*/model/*.pkl
+artifacts/*/model/*.pt
+artifacts/*/model/*.pth
+artifacts/*/plots/*.png
+# Keep: artifacts/*/metrics/*.json, artifacts/*/config/
+
+# ── IDE / Editor ──────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+desktop.ini
+
+# ── Testing / Coverage ────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+
+# ── Mypy / type checking ──────────────────────────────────────────────────────
+.mypy_cache/
+.dmypy.json
+
+# ── MLflow / experiment tracking ──────────────────────────────────────────────
+mlruns/
+mlflow.db
+
+# ── Temporary files ───────────────────────────────────────────────────────────
+tmp/
+temp/
+*.tmp
+*.bak
+*.orig

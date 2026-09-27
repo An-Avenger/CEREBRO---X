@@ -1,0 +1,29 @@
+{
+  "dataset_id": "oasis2_kaggle",
+  "file_path": "E:\\PROJECTS\\CEREBRO-X\\data\\raw\\oasis_longitudinal.csv",
+  "file_hash_md5": "fc83281e4b9c060a8046cdc435b222ca",
+  "shape": [
+    373,
+    15
+  ],
+  "column_list": [
+    "Subject ID",
+    "MRI ID",
+    "Group",
+    "Visit",
+    "MR Delay",
+    "M/F",
+    "Hand",
+    "Age",
+    "EDUC",
+    "SES",
+    "MMSE",
+    "CDR",
+    "eTIV",
+    "nWBV",
+    "ASF"
+  ],
+  "download_note": "Kaggle jboysen/mri-and-alzheimers",
+  "processing_date": "2026-08-18T13:34:59.318529+00:00",
+  "software_note": ""
+}

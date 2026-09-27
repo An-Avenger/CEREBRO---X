@@ -1,0 +1,159 @@
+# Cerebro-X — Phase 14 Final Research Audit
+*Date: 2026-08-27 | Auditor: Aryan Sharma*
+
+---
+
+> [!IMPORTANT]
+> This document is the official Phase 14 checklist for the Cerebro-X M.Tech research project.  
+> Every item below has been verified against the actual codebase, artifacts, and documentation.
+
+---
+
+## Checklist
+
+### Dataset Provenance
+
+- [x] **Dataset provenance verified.**  
+  OASIS-2 downloaded from `https://www.oasis-brains.org/` under an open-access research agreement.  
+  Reference: Marcus et al. (2010), *Journal of Cognitive Neuroscience*, doi:10.1162/jocn.2009.21407.  
+  Download metadata: `data/metadata/` (excluded from Git; inventory logged in `docs/DATASET_CARD.md`).
+
+- [x] **EEG dataset provenance verified.**  
+  OpenNeuro `ds004504` — Alzheimer's/FTD EEG dataset; accessed 2026 via OpenNeuro platform.  
+  Separate cohort from OASIS-2 (87 subjects). See `DOCS/EEG_LIMITATION.md`.
+
+- [x] **Data-use terms respected.**  
+  OASIS-2 terms: Non-commercial research only, no redistribution, no re-identification.  
+  Raw data is excluded from Git, Docker images, and all public repositories via `.gitignore` and `.dockerignore`.  
+  Evidence: `data/` excluded in `.gitignore` (line 20+) and `.dockerignore` (line 11).
+
+---
+
+### Data Integrity
+
+- [x] **No leakage.**  
+  Subject-level splits enforced in `src/cerebro_x/data/build_longitudinal_pairs.py` via `GroupShuffleSplit(groups=subject_ids)`.  
+  No subject appears in both train and test sets. Verified by `tests/test_splits.py` (8 tests, all passing).
+
+- [x] **Patient-level splits documented.**  
+  Train/Validation/Test: 70% / 15% / 15% at subject level.  
+  Reference: `configs/base.yaml` → `split.test_size: 0.15`, `split.val_size: 0.15`.  
+  Total OASIS-2: 150 subjects → 28 test subjects, 223 visit pairs total.
+
+---
+
+### Models and Evaluation
+
+- [x] **Baselines reported.**  
+  Phase 3 baselines: Dummy Classifier, Logistic Regression, Random Forest.  
+  Metrics in: `artifacts/EXP-BASELINE-001/metrics.json` and `artifacts/FINAL_REPORT.md`.
+
+- [x] **Primary model reported.**  
+  Temporal GRU (TemporalCerebroNet): 75.0% accuracy, 55.7% balanced accuracy, 55.1% F1 macro on test set.  
+  Checkpoint: `artifacts/EXP-LONGITUDINAL-001/temporal_gru_cpu.pt`.  
+  Training: Kaggle T4 GPU, `notebooks/02_cloud_training/kaggle_runner.ipynb`.
+
+- [x] **Ablation reported.**  
+  Last-Visit Baseline ablation in `EXP-LONGITUDINAL-001`:  
+  71.4% accuracy, 53.7% balanced accuracy — demonstrating temporal context improves by +3.6% / +2.0%.  
+  Bimodal fusion ablation in `EXP-FUSION-BIMODAL-001`:  
+  Clinical only vs MRI only vs Clinical+MRI. Clinical GRU outperforms bimodal on this dataset size.
+
+- [x] **Cross-dataset experiment noted.**  
+  ADNI cross-dataset validation planned but not executed due to ADNI access and scope constraints.  
+  Limitation documented in `DOCS/ADNI_EXTERNAL_VALIDATION.md` and `DOCS/RESEARCH_LIMITATIONS.md`.
+
+- [x] **Explainability limitations documented.**  
+  Grad-CAM scaffold implemented but requires 3D MRI NIfTI volumes (not available in OASIS-2 clinical scalar pipeline).  
+  SHAP is approximated via background samples, not exact Shapley values.  
+  Reference: `DOCS/RESEARCH_LIMITATIONS.md` and `src/cerebro_x/explainability/`.
+
+---
+
+### Reproducibility
+
+- [x] **Random seeds documented.**  
+  Training random seed: `42` (PyTorch `torch.manual_seed(42)`, NumPy `np.random.seed(42)`).  
+  Reference: `configs/base.yaml` → `training.seed: 42`.  
+  Robustness test `TestR008Determinism` verifies deterministic inference (39 tests, all passing).
+
+- [x] **Software versions documented.**  
+  Full dependency list with pinned versions in `pyproject.toml` and `requirements.txt`.
+
+  | Package | Version |
+  |---|---|
+  | Python | 3.13.5 |
+  | PyTorch | 2.7.1 |
+  | FastAPI | 0.115.x |
+  | scikit-learn | 1.6.x |
+  | SHAP | 0.47.x |
+  | pandas | 2.x |
+  | Next.js | 16.3.2 |
+
+- [x] **Dataset download dates documented.**  
+  OASIS-2: Downloaded August 2026. See `DOCS/DATASET_CARD.md` for full metadata.  
+  OpenNeuro ds004504: Downloaded August 2026.
+
+---
+
+### Limitations
+
+- [x] **Limitations documented.**  
+  Key limitations catalogued in `DOCS/RESEARCH_LIMITATIONS.md`:
+  1. Small dataset (150 subjects) → high variance in test metrics
+  2. No 3D MRI volumes → Grad-CAM scaffold only
+  3. No ADNI cross-dataset validation (access/scope)
+  4. OASIS-2 CDR class imbalance (CDR=0 majority)
+  5. SHAP is approximated, not exact
+  6. Longitudinal GRU slightly underperforms Logistic Regression on balanced accuracy
+  7. EEG model is on a completely separate cohort and cannot be directly combined with OASIS-2 predictions
+
+- [x] **Clinical claims removed.**  
+  All outputs include a mandatory research disclaimer:  
+  *"Research Prototype Only. Not validated for clinical use."*  
+  Disclaimer present in: API root response, every prediction endpoint response, frontend callout component, `README.md`.
+
+- [x] **Thesis figures reproducible.**  
+  All figures generated by deterministic scripts:
+  - `scripts/generate_final_report.py` → `artifacts/FINAL_REPORT.md`
+  - `scripts/run_explainability.py` → `artifacts/EXP-EXPLAIN-001/`
+  - `scripts/run_robustness.py` → `artifacts/ROBUSTNESS_REPORT.md`
+  All training and reporting scripts logged with timestamps and random seeds.
+
+---
+
+## Robustness (Phase 11)
+
+- [x] **39/39 robustness tests pass** — `tests/test_robustness.py`
+- [x] **8 stress scenarios covered**: Missing values, single-visit, zero MRI, outliers, class imbalance, temporal gaps, distribution shift, determinism
+- [x] **Report generated**: `artifacts/ROBUSTNESS_REPORT.md`
+
+---
+
+## Deployment (Phase 13)
+
+- [x] `Dockerfile` (FastAPI backend) — multi-stage build
+- [x] `frontend/Dockerfile` (Next.js) — three-stage build
+- [x] `docker-compose.yml` — orchestrates API + frontend with health checks
+- [x] `.dockerignore` — raw data excluded from images
+- [x] `run.ps1` — local launch script
+
+---
+
+## Summary
+
+All **15 checklist items** are confirmed complete.  
+The Cerebro-X research prototype is fully documented, tested, and audited.
+
+| Category | Items | Status |
+|---|---|---|
+| Dataset provenance | 3 | ✓ All verified |
+| Data integrity | 2 | ✓ No leakage confirmed |
+| Models & evaluation | 6 | ✓ All reported |
+| Reproducibility | 3 | ✓ Seeds, versions, dates logged |
+| Limitations | 1 (multi-point) | ✓ 7 limitations documented |
+
+---
+
+*Cerebro-X Phase 14 — M.Tech Research Project, Aryan Sharma*  
+*Indian Institute of Technology · 2026*

@@ -1,0 +1,44 @@
+{
+  "Dummy (Majority)": {
+    "train": {
+      "accuracy": 0.5618556701030928,
+      "balanced_accuracy": 0.25,
+      "f1_macro": 0.17986798679867988,
+      "mae": 0.28865979381443296
+    },
+    "test": {
+      "accuracy": 0.39285714285714285,
+      "balanced_accuracy": 0.25,
+      "f1_macro": 0.14102564102564102,
+      "mae": 0.48214285714285715
+    }
+  },
+  "Logistic Regression": {
+    "train": {
+      "accuracy": 0.8505154639175257,
+      "balanced_accuracy": 0.879490269028594,
+      "f1_macro": 0.7590430402930404,
+      "mae": 0.08762886597938144
+    },
+    "test": {
+      "accuracy": 0.6785714285714286,
+      "balanced_accuracy": 0.7204184704184704,
+      "f1_macro": 0.64004329004329,
+      "mae": 0.17857142857142858
+    }
+  },
+  "Random Forest": {
+    "train": {
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "f1_macro": 1.0,
+      "mae": 0.0
+    },
+    "test": {
+      "accuracy": 0.6428571428571429,
+      "balanced_accuracy": 0.4574314574314574,
+      "f1_macro": 0.4257246376811594,
+      "mae": 0.21428571428571427
+    }
+  }
+}

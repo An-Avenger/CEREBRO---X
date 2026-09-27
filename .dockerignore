@@ -1,0 +1,63 @@
+# ─── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ─── Data (NEVER in Docker image) ────────────────────────────────────────────
+data/
+*.csv
+*.xlsx
+
+# ─── Raw / Large Artifacts ───────────────────────────────────────────────────
+# Exclude everything except model checkpoints and metrics
+artifacts/*/
+!artifacts/EXP-LONGITUDINAL-001/temporal_gru_cpu.pt
+!artifacts/EXP-LONGITUDINAL-001/metrics.json
+!artifacts/EXP-FUSION-BIMODAL-001/clinical_plus_mri.pt
+!artifacts/EXP-FUSION-BIMODAL-001/metrics.json
+!artifacts/EXP-EEG-STANDALONE-001/
+!artifacts/EXP-BASELINE-001/metrics.json
+!artifacts/EXP-EXPLAIN-001/metrics.json
+
+# ─── Notebooks ───────────────────────────────────────────────────────────────
+notebooks/
+*.ipynb
+
+# ─── Zips ────────────────────────────────────────────────────────────────────
+*.zip
+*.tar.gz
+
+# ─── Frontend build artifacts ─────────────────────────────────────────────────
+frontend/node_modules/
+frontend/.next/
+frontend/.git/
+
+# ─── Git ─────────────────────────────────────────────────────────────────────
+.git/
+.gitignore
+.gitattributes
+
+# ─── Docs / PPT ──────────────────────────────────────────────────────────────
+*.pptx
+*.docx
+*.pdf
+DOCS/
+scratch/
+
+# ─── Logs ────────────────────────────────────────────────────────────────────
+logs/
+*.log
+
+# ─── IDE ─────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp

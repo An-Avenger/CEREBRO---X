@@ -1,0 +1,36 @@
+# =============================================================================
+# Cerebro X — Base Configuration
+# =============================================================================
+
+project:
+  name: "cerebro-x"
+  version: "0.1.0"
+  description: "AI-Based Longitudinal Digital Brain Twin"
+
+# Random seed — must be set everywhere (numpy, sklearn, torch)
+seed: 42
+
+# Paths (relative to project root — override with absolute paths in local env vars)
+paths:
+  data_root: "data"
+  raw: "data/raw"
+  interim: "data/interim"
+  processed: "data/processed"
+  metadata: "data/metadata"
+  artifacts: "artifacts"
+  scripts: "scripts"
+  notebooks: "notebooks"
+  logs: "logs"
+
+# Active dataset
+active_dataset: "oasis2_kaggle"
+
+# Logging
+logging:
+  level: "INFO"
+  format: "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+
+# Experiment tracking
+experiments:
+  base_dir: "artifacts"
+  auto_increment_id: true

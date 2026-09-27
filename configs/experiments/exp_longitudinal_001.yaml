@@ -1,0 +1,40 @@
+# =============================================================================
+# Cerebro X — Experiment: EXP-LONGITUDINAL-001
+# Phase 5 — Longitudinal Digital Brain Twin
+# =============================================================================
+
+experiment:
+  id: "EXP-LONGITUDINAL-001"
+  phase: 5
+  description: "Longitudinal temporal model — GRU on clinical visit sequences"
+  baseline_to_beat: "LogReg 72.0% Balanced Accuracy (Phase 3)"
+
+data:
+  source: "data/processed/next_visit_pairs.csv"
+  target: "next_CDR"
+  split_seed: 42
+  test_size: 0.15
+  val_size: 0.15
+
+models:
+  last_visit_baseline:
+    type: "LastVisitBaseline"
+    hidden_dim: 32
+
+  temporal_gru:
+    type: "TemporalCerebroNet"
+    gru_hidden_dim: 64
+    gru_num_layers: 1
+    bidirectional: false
+    head_hidden_dim: 32
+    dropout: 0.3
+
+training:
+  epochs: 30
+  batch_size: 8
+  learning_rate: 0.001
+  optimizer: "AdamW"
+  weight_decay: 0.01
+  class_weighted_loss: true
+  patience: 7  # early stopping on val loss
+  seed: 42
