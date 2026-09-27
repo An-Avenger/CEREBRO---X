@@ -47,10 +47,25 @@ class MockNibabel:
     def as_closest_canonical(img):
         return img
 
-# Apply mock to NiftiLoader module
-import cerebro_x.imaging.nifti_loader as loader_module
-loader_module.nib = MockNibabel()
-loader_module._NIB_AVAILABLE = True
+
+# Install mock BEFORE tests in this module, and explicitly restore after.
+# We use a function-scoped fixture (autouse=True) that patches per test,
+# which avoids leaking into other test modules.
+@pytest.fixture(autouse=True)
+def _mock_nibabel_for_this_module(monkeypatch):
+    """
+    Patches nibabel in nifti_loader for EACH test in this module.
+    monkeypatch auto-restores after each test, so no cross-module pollution.
+    """
+    import cerebro_x.imaging.nifti_loader as loader_module
+    monkeypatch.setattr(loader_module, "nib", MockNibabel())
+    monkeypatch.setattr(loader_module, "_NIB_AVAILABLE", True)
+    yield
+    # monkeypatch auto-restores here
+
+
+
+
 
 
 @pytest.fixture

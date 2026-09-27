@@ -89,12 +89,17 @@ class TestNiftiLoader:
         result = loader.load("/definitely/does/not/exist.nii", subject_id="TEST", visit=1)
         assert result.status == MRILoadStatus.MISSING
 
-    def test_load_empty_volume(self):
+    def test_load_empty_volume(self, monkeypatch):
         """CRITICAL: NiftiLoader detects and rejects all-zero volumes."""
         try:
             import nibabel as nib
         except ImportError:
             pytest.skip("nibabel not installed")
+
+        # Ensure real nibabel is used (protect against mock from test_mri_preprocessing.py)
+        import cerebro_x.imaging.nifti_loader as loader_module
+        monkeypatch.setattr(loader_module, "nib", nib)
+        monkeypatch.setattr(loader_module, "_NIB_AVAILABLE", True)
 
         from cerebro_x.imaging.nifti_loader import NiftiLoader, MRILoadStatus
 
@@ -114,12 +119,17 @@ class TestNiftiLoader:
 
         assert result.status == MRILoadStatus.EMPTY, f"Expected EMPTY, got {result.status}: {result.message}"
 
-    def test_load_wrong_dimensions(self):
+    def test_load_wrong_dimensions(self, monkeypatch):
         """CRITICAL: Loader rejects volumes with out-of-range dimensions."""
         try:
             import nibabel as nib
         except ImportError:
             pytest.skip("nibabel not installed")
+
+        # Ensure real nibabel is used (protect against mock from test_mri_preprocessing.py)
+        import cerebro_x.imaging.nifti_loader as loader_module
+        monkeypatch.setattr(loader_module, "nib", nib)
+        monkeypatch.setattr(loader_module, "_NIB_AVAILABLE", True)
 
         data = np.ones((10, 10, 10), dtype=np.float32)  # 10 < min_dim_voxels=32
         img = nib.Nifti1Image(data, np.eye(4))
@@ -134,6 +144,7 @@ class TestNiftiLoader:
         path.unlink(missing_ok=True)
 
         assert result.status == MRILoadStatus.WRONG_DIMENSIONS
+
 
     def test_tensor_dtype_is_float32(self):
         """IMPORTANT: Loaded tensor must be float32 for PyTorch compatibility."""
