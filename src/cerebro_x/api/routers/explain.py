@@ -17,7 +17,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Form
 
 from cerebro_x.api.schemas.patient import PredictionRequest
 from cerebro_x.api.services.model_loader import get_registry
@@ -381,7 +381,7 @@ def _heuristic_fallback(request: PredictionRequest, registry) -> dict:
 )
 async def explain_mri(
     file: UploadFile = File(..., description="NIfTI MRI file (.nii or .nii.gz)"),
-    target_class: Optional[int] = None,
+    target_class: Optional[int] = Form(None),
     registry=Depends(get_registry),
 ):
     """

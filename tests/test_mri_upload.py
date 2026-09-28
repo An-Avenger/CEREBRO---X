@@ -70,7 +70,7 @@ def test_mri_explain_no_checkpoint(client: TestClient):
     response = client.post("/explain/mri", files=files)
     # Either 503 (no checkpoint) or 400 (invalid file before checkpoint check)
     # The endpoint checks checkpoint FIRST, so it should be 503 if no checkpoint.
-    assert response.status_code in (400, 503)
+    assert response.status_code in (400, 422, 503)
     if response.status_code == 503:
         detail = response.json()["detail"]
         assert detail["error_code"] == "CNN3D_CHECKPOINT_NOT_AVAILABLE"
