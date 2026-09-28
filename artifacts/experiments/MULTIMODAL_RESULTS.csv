@@ -1,0 +1,8 @@
+experiment_id,model_name,modalities,dataset,n_subjects,n_samples,accuracy,balanced_accuracy,macro_precision,macro_recall,macro_f1,roc_auc,pr_auc,mae,seed,split_strategy,checkpoint,status,notes
+M1,TemporalCerebroNet (GRU),Clinical,OASIS-2,150,223,0.750,0.557,null,null,0.551,null,null,0.161,42,subject-level,artifacts/EXP-LONGITUDINAL-001/temporal_gru_cpu.pt,VALIDATED,Legitimate baseline
+M2,MRICerebroNet (3D CNN),MRI,ADNI (Pending),null,null,null,null,null,null,null,null,null,null,42,subject-level,null,UNAVAILABLE,Pipeline ready; awaiting authorized ADNI NIfTI dataset
+M3,EEGSpectralEncoder,EEG,OpenNeuro ds004504,87,87,0.500,0.478,null,null,0.476,null,null,null,42,subject-level,artifacts/EXP-EEG-STANDALONE-001/binary_encoder.pt,VALIDATED,Binary task (AD/FTD vs Control) unaligned with OASIS-2
+M4,LegacyBimodalCerebroNet,Clinical + MRI,OASIS-2,150,223,0.714,0.529,null,null,null,null,null,null,42,subject-level,artifacts/EXP-FUSION-BIMODAL-001/clinical_plus_mri.pt,LEGACY,Uses scalar volumetric features NOT 3D NIfTI CNN embeddings
+M5,BimodalCerebroNet,Clinical + EEG,N/A,null,null,null,null,null,null,null,null,null,null,null,null,null,UNAVAILABLE,No patient-aligned Clinical + EEG cohort
+M6,BimodalCerebroNet,MRI + EEG,N/A,null,null,null,null,null,null,null,null,null,null,null,null,null,UNAVAILABLE,No patient-aligned MRI + EEG cohort
+M7,TriModalCerebroNet,Clinical + MRI + EEG,N/A,null,null,null,null,null,null,null,null,null,null,null,null,null,UNAVAILABLE,No patient-aligned cohort exists. Architecture scaffold built but untrained.
