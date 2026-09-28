@@ -116,9 +116,17 @@ class GradCAM3DCNN:
         self.remove_hooks()
 
     def _get_embedding(self, x: torch.Tensor) -> list[float]:
-        """Extract 64-dim embedding without gradient tracking."""
+        """Extract 64-dim CNN embedding without gradient tracking.
+        
+        Works with both Lightweight3DCNN (embedding output) and
+        MRICerebroNet (logit output via .cnn backbone).
+        """
         with torch.no_grad():
-            emb = self.model(x)
+            # Try to get embedding from .cnn backbone if it exists
+            if hasattr(self.model, "cnn"):
+                emb = self.model.cnn(x)   # (1, embedding_dim)
+            else:
+                emb = self.model(x)       # Lightweight3DCNN: already (1, embed_dim)
         return emb.squeeze(0).cpu().numpy().tolist()
 
     def generate(
@@ -210,7 +218,10 @@ class GradCAM3DCNN:
         # ── Extract embedding ──────────────────────────────────────────────────
         try:
             with torch.no_grad():
-                embedding = self.model(x).squeeze(0).cpu().numpy().tolist()
+                if hasattr(self.model, "cnn"):
+                    embedding = self.model.cnn(x).squeeze(0).cpu().numpy().tolist()
+                else:
+                    embedding = self.model(x).squeeze(0).cpu().numpy().tolist()
         except Exception:
             embedding = None
 

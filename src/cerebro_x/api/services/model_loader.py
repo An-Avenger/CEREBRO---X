@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +27,10 @@ class ModelRegistry:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._loaded = False
+            cls._instance.status = {}
+            cls._instance.models = {}
+            cls._instance.scalers = {}
+            cls._instance.metrics = {}
         return cls._instance
 
     def load_all(self) -> None:
@@ -39,6 +44,7 @@ class ModelRegistry:
         self.status: dict[str, bool] = {}
 
         self._load_clinical_gru()
+        self._load_shap_background()
         self._load_bimodal_fusion()
         self._load_eeg_encoder()
         self._load_cnn3d()
@@ -92,6 +98,53 @@ class ModelRegistry:
             logger.error("Failed to load Clinical GRU: %s", e)
             self.status["clinical_gru"] = False
 
+
+    def _load_shap_background(self) -> None:
+        """
+        Load the SHAP background tensor and lengths from the pre-built artifact.
+
+        Artifact: artifacts/EXP-LONGITUDINAL-001/shap_background.pt
+        Build:    python scripts/build_shap_background.py
+
+        The background size can be capped via env var SHAP_BACKGROUND_SIZE (default 50).
+        """
+        try:
+            bg_path = ARTIFACTS_DIR / "EXP-LONGITUDINAL-001" / "shap_background.pt"
+            meta_path = ARTIFACTS_DIR / "EXP-LONGITUDINAL-001" / "shap_background_meta.json"
+
+            if not bg_path.exists():
+                logger.warning(
+                    "SHAP background artifact not found at %s. "
+                    "Run: python scripts/build_shap_background.py",
+                    bg_path,
+                )
+                self.status["shap_background"] = False
+                return
+
+            state = torch.load(bg_path, map_location="cpu", weights_only=True)
+            bg_tensor: torch.Tensor = state["background"]   # (N, seq_len, 19)
+            bg_lengths: torch.Tensor = state["lengths"]     # (N,)
+
+            # Cap to configurable background size
+            max_bg = int(os.getenv("SHAP_BACKGROUND_SIZE", "50"))
+            n = min(max_bg, bg_tensor.size(0))
+            self.models["shap_background"] = bg_tensor[:n]    # (n, seq_len, 19)
+            self.models["shap_bg_lengths"] = bg_lengths[:n]   # (n,)
+
+            # Load provenance metadata
+            if meta_path.exists():
+                with open(meta_path) as f:
+                    self.metrics["shap_background_meta"] = json.load(f)
+
+            self.status["shap_background"] = True
+            logger.info(
+                "SHAP background loaded: %d samples (capped from %d), shape %s",
+                n, bg_tensor.size(0), tuple(self.models["shap_background"].shape),
+            )
+
+        except Exception as e:
+            logger.error("Failed to load SHAP background: %s", e)
+            self.status["shap_background"] = False
 
     def _load_bimodal_fusion(self) -> None:
         """Load BimodalCerebroNet (Phase 5)."""
@@ -171,36 +224,54 @@ class ModelRegistry:
 
     def _load_cnn3d(self) -> None:
         """
-        Load Lightweight3DCNN for real MRI processing.
+        Load MRICerebroNet for real MRI processing and Grad-CAM.
+
+        MRICerebroNet = Lightweight3DCNN backbone + 4-class CDR classifier head.
+        This is the correct model for Grad-CAM (outputs logits, not embeddings).
 
         Expects checkpoint at: artifacts/EXP-MRI-CNN3D-001/cnn3d_cpu.pt
+        Config at:             artifacts/EXP-MRI-CNN3D-001/cnn3d_config.json
+
         If not found, status["cnn3d"] = False — no fake model is created.
         Callers must check registry.status["cnn3d"] before using the model.
         """
         try:
             import sys
             sys.path.insert(0, str(Path("src")))
-            from cerebro_x.models.deep.cnn3d import Lightweight3DCNN
+            from cerebro_x.models.deep.cnn3d import MRICerebroNet
 
             checkpoint_path = ARTIFACTS_DIR / "EXP-MRI-CNN3D-001" / "cnn3d_cpu.pt"
+            config_path     = ARTIFACTS_DIR / "EXP-MRI-CNN3D-001" / "cnn3d_config.json"
+
             if not checkpoint_path.exists():
                 logger.warning(
                     "CNN3D checkpoint not found at %s. "
-                    "MRI 3D-CNN embedding and Grad-CAM will be unavailable. "
-                    "To train: run training/train_cnn3d.py",
+                    "MRI 3D-CNN and Grad-CAM will be unavailable. "
+                    "To train: run python scripts/train_cnn3d.py",
                     checkpoint_path,
                 )
                 self.status["cnn3d"] = False
                 return
 
-            model = Lightweight3DCNN(in_channels=1, embedding_dim=64)
+            # Read architecture config if available
+            embedding_dim = 64
+            if config_path.exists():
+                with open(config_path) as f:
+                    cfg = json.load(f)
+                embedding_dim = cfg.get("embedding_dim", 64)
+
+            model = MRICerebroNet(
+                in_channels=1,
+                embedding_dim=embedding_dim,
+                num_classes=4,
+            )
             model.load_state_dict(
                 torch.load(checkpoint_path, map_location="cpu", weights_only=True)
             )
             model.eval()
             self.models["cnn3d"] = model
             self.status["cnn3d"] = True
-            logger.info("CNN3D loaded from %s", checkpoint_path)
+            logger.info("CNN3D (MRICerebroNet) loaded from %s", checkpoint_path)
 
         except Exception as e:
             logger.error("Failed to load CNN3D: %s", e)

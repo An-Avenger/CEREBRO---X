@@ -1,0 +1,211 @@
+{
+  "experiment_id": "EXP-MRI-CNN3D-001",
+  "model_class": "MRICerebroNet",
+  "status": "SYNTHETIC_SCAFFOLD",
+  "warning": "Trained on SYNTHETIC volumetric data, NOT real MRI NIfTI. Architecture is correct. Grad-CAM hooks fire correctly. Predictions do NOT have neuroimaging validity. Replace with real OASIS-2/ADNI NIfTI training for clinical relevance.",
+  "checkpoint_path": "artifacts\\EXP-MRI-CNN3D-001\\cnn3d_cpu.pt",
+  "checkpoint_sha256": "ce06ad3e3264ccc6c96e0156f27f0a94e6c20ebf5fe931cad356cf470b0ef016",
+  "dataset": "Synthetic (Gaussian volumes, CDR distribution from OASIS-2)",
+  "n_train": 160,
+  "n_val": 40,
+  "cdr_class_weights": [
+    0.6,
+    0.3,
+    0.08,
+    0.02
+  ],
+  "epochs": 25,
+  "best_epoch": 4,
+  "best_val_acc": 0.975,
+  "batch_size": 8,
+  "lr": 0.001,
+  "optimizer": "Adam",
+  "scheduler": "CosineAnnealingLR",
+  "seed": 42,
+  "training_time_s": 680.4,
+  "device": "cpu",
+  "volume_shape": [
+    64,
+    64,
+    64
+  ],
+  "n_parameters": 147332,
+  "training_history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.3651,
+      "train_acc": 0.3812,
+      "val_loss": 1.2607,
+      "val_acc": 0.3
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.0578,
+      "train_acc": 0.65,
+      "val_loss": 0.8703,
+      "val_acc": 0.625
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.8895,
+      "train_acc": 0.8375,
+      "val_loss": 1.3164,
+      "val_acc": 0.6
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.6931,
+      "train_acc": 0.8625,
+      "val_loss": 0.5136,
+      "val_acc": 0.975
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.5726,
+      "train_acc": 0.9,
+      "val_loss": 0.6418,
+      "val_acc": 0.9
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.6065,
+      "train_acc": 0.875,
+      "val_loss": 0.3629,
+      "val_acc": 0.975
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.3802,
+      "train_acc": 0.9437,
+      "val_loss": 0.2981,
+      "val_acc": 0.975
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.3126,
+      "train_acc": 0.975,
+      "val_loss": 0.2768,
+      "val_acc": 0.975
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.3293,
+      "train_acc": 0.975,
+      "val_loss": 0.2219,
+      "val_acc": 0.975
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.2596,
+      "train_acc": 0.9812,
+      "val_loss": 0.2146,
+      "val_acc": 0.975
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.2583,
+      "train_acc": 0.9563,
+      "val_loss": 0.3614,
+      "val_acc": 0.975
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.2212,
+      "train_acc": 0.975,
+      "val_loss": 0.2359,
+      "val_acc": 0.975
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.2381,
+      "train_acc": 0.9812,
+      "val_loss": 0.2174,
+      "val_acc": 0.975
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.1918,
+      "train_acc": 0.9812,
+      "val_loss": 0.2092,
+      "val_acc": 0.975
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.2227,
+      "train_acc": 0.9812,
+      "val_loss": 0.2003,
+      "val_acc": 0.975
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.2123,
+      "train_acc": 0.9812,
+      "val_loss": 0.1898,
+      "val_acc": 0.975
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.1655,
+      "train_acc": 0.9812,
+      "val_loss": 0.1818,
+      "val_acc": 0.975
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.1915,
+      "train_acc": 0.975,
+      "val_loss": 0.1623,
+      "val_acc": 0.975
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.1774,
+      "train_acc": 0.9688,
+      "val_loss": 0.1619,
+      "val_acc": 0.975
+    },
+    {
+      "epoch": 20,
+      "train_loss": 0.1723,
+      "train_acc": 0.9812,
+      "val_loss": 0.1489,
+      "val_acc": 0.975
+    },
+    {
+      "epoch": 21,
+      "train_loss": 0.1281,
+      "train_acc": 0.9812,
+      "val_loss": 0.142,
+      "val_acc": 0.975
+    },
+    {
+      "epoch": 22,
+      "train_loss": 0.1591,
+      "train_acc": 0.9812,
+      "val_loss": 0.1384,
+      "val_acc": 0.975
+    },
+    {
+      "epoch": 23,
+      "train_loss": 0.1417,
+      "train_acc": 0.9812,
+      "val_loss": 0.1371,
+      "val_acc": 0.975
+    },
+    {
+      "epoch": 24,
+      "train_loss": 0.1317,
+      "train_acc": 0.9812,
+      "val_loss": 0.1352,
+      "val_acc": 0.975
+    },
+    {
+      "epoch": 25,
+      "train_loss": 0.1775,
+      "train_acc": 0.9688,
+      "val_loss": 0.1353,
+      "val_acc": 0.975
+    }
+  ],
+  "clinically_validated": false
+}

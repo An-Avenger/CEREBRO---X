@@ -1,0 +1,7 @@
+{
+  "experiment_id": "EXP-MRI-CNN3D-001",
+  "model": "MRICerebroNet",
+  "dataset": "Synthetic (NOT real MRI)",
+  "best_val_accuracy": 0.975,
+  "warning": "Synthetic training data only. Not neuroimaging-valid."
+}

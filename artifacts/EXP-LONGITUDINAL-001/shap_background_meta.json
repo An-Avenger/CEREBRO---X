@@ -1,0 +1,37 @@
+{
+  "source": "OASIS-2 training split (subject-level split, seed=42)",
+  "n_samples": 50,
+  "max_seq_len": 5,
+  "n_features": 19,
+  "feature_order": [
+    "curr_age",
+    "sex",
+    "hand",
+    "educ",
+    "ses",
+    "curr_mmse",
+    "curr_cdr",
+    "curr_etiv",
+    "curr_nwbv",
+    "curr_asf",
+    "current_mr_delay",
+    "days_between_visits",
+    "n_prior_visits",
+    "prev_mmse",
+    "prev_cdr",
+    "prev_nwbv",
+    "mmse_delta",
+    "cdr_delta",
+    "nwbv_delta"
+  ],
+  "split": "train (70%)",
+  "contamination": "none \u2014 test set excluded",
+  "build_seed": 42,
+  "preprocessor": "artifacts\\EXP-LONGITUDINAL-001\\clinical_preprocessor.pkl",
+  "background_tensor": "artifacts\\EXP-LONGITUDINAL-001\\shap_background.pt",
+  "tensor_shape": [
+    50,
+    5,
+    19
+  ]
+}
