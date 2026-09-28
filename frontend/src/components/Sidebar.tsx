@@ -17,6 +17,7 @@ const NAV_ITEMS = [
     section: 'Data',
     items: [
       { href: '/experiments',   icon: '⚗',  label: 'Experiments',   badge: '10' },
+      { href: '/experiments/modality-comparison', icon: '📊', label: 'Modality Comparison', badge: 'NEW' },
       { href: '/history',       icon: '📋',  label: 'Prediction Log',badge: null },
     ],
   },

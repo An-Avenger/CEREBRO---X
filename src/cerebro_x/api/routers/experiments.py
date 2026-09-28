@@ -63,3 +63,16 @@ def get_experiment(experiment_id: str, registry=Depends(get_registry)):
         metrics=registry.metrics[experiment_id],
         artifact_path=str(Path("artifacts") / experiment_id),
     )
+
+@router.get(
+    "/multimodal/comparison",
+    summary="Get multimodal comparison results",
+    description="Returns the parsed MULTIMODAL_RESULTS.json for frontend comparison.",
+)
+def get_multimodal_comparison():
+    import json
+    path = Path("artifacts/experiments/MULTIMODAL_RESULTS.json")
+    if not path.exists():
+        raise HTTPException(404, "MULTIMODAL_RESULTS.json not found. Run scripts/run_phase4_multimodal.py")
+    with open(path, "r") as f:
+        return json.load(f)
