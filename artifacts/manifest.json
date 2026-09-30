@@ -61,15 +61,16 @@
       "python_version": "3.10"
     },
     "cnn3d": {
-      "experiment_id": "EXP-MRI-CNN3D-001",
+      "experiment_id": "EXP-MRI-CNN3D-OASIS2",
       "model_name": "Lightweight3DCNN",
       "model_class": "cerebro_x.models.deep.cnn3d.Lightweight3DCNN",
-      "checkpoint_path": "artifacts/EXP-MRI-CNN3D-001/cnn3d_cpu.pt",
-      "dataset": "ADNI/OASIS NIfTI — NOT YET AVAILABLE",
+      "checkpoint_path": "artifacts/OASIS2-MRI-TRAIN/cnn3d_best.pt",
+      "dataset": "OASIS-2 NIfTI MRI Dataset",
       "trained": false,
       "checkpoint_available": false,
       "clinically_validated": false,
-      "status": "Architecture implemented. No trained checkpoint. Requires NIfTI dataset."
+      "status": "REAL_DATA_PREPARED_TRAINING_PENDING",
+      "note": "Awaiting Cloud GPU execution of scripts/train_oasis2_mri_3d.py"
     },
     "eeg_encoder": {
       "experiment_id": "EXP-EEG-STANDALONE-001",
