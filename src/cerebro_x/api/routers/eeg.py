@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from cerebro_x.api.services.model_loader import get_registry
 from cerebro_x.api.services.inference import run_eeg_inference
@@ -35,23 +35,22 @@ class EEGScreenRequest(BaseModel):
     theta_alpha_ratio: Optional[float] = Field(None, description="Theta/Alpha ratio")
     spectral_edge_freq_95: Optional[float] = Field(None, description="SEF95 in Hz")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "global_delta": 2.45e-10,
-                "global_theta": 1.23e-10,
-                "global_alpha": 3.12e-10,
-                "global_beta": 0.87e-10,
-                "global_gamma": 0.34e-10,
-                "rel_global_delta": 0.30,
-                "rel_global_theta": 0.15,
-                "rel_global_alpha": 0.38,
-                "rel_global_beta": 0.11,
-                "rel_global_gamma": 0.06,
-                "theta_alpha_ratio": 0.40,
-                "spectral_edge_freq_95": 22.5
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "global_delta": 2.45e-10,
+            "global_theta": 1.23e-10,
+            "global_alpha": 3.12e-10,
+            "global_beta": 0.87e-10,
+            "global_gamma": 0.34e-10,
+            "rel_global_delta": 0.30,
+            "rel_global_theta": 0.15,
+            "rel_global_alpha": 0.38,
+            "rel_global_beta": 0.11,
+            "rel_global_gamma": 0.06,
+            "theta_alpha_ratio": 0.40,
+            "spectral_edge_freq_95": 22.5
         }
+    })
 
 
 @router.post(

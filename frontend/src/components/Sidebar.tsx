@@ -11,6 +11,7 @@ const NAV_ITEMS = [
       { href: '/predict',       icon: '⚡', label: 'Predict CDR',   badge: null },
       { href: '/brain-twin',    icon: '🧠', label: 'Brain Twin',    badge: null },
       { href: '/explainability',icon: '🔍', label: 'Explainability',badge: null },
+      { href: '/eeg',           icon: '〜', label: 'EEG Screener',  badge: 'NEW' },
     ],
   },
   {

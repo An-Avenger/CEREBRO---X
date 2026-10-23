@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, JSON
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from .database import Base
 
 class Patient(Base):
@@ -14,7 +14,7 @@ class PredictionRecord(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     patient_id = Column(String, ForeignKey("patients.id"))
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     
     # Clinical Features of the visit
     age = Column(Float)

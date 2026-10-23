@@ -32,12 +32,17 @@ COPY configs/ ./configs/
 
 # Copy only model checkpoints from artifacts (not raw data or large images)
 COPY artifacts/EXP-LONGITUDINAL-001/temporal_gru_cpu.pt     artifacts/EXP-LONGITUDINAL-001/temporal_gru_cpu.pt
+COPY artifacts/EXP-LONGITUDINAL-001/clinical_preprocessor.pkl artifacts/EXP-LONGITUDINAL-001/clinical_preprocessor.pkl
+COPY artifacts/EXP-LONGITUDINAL-001/shap_background.pt       artifacts/EXP-LONGITUDINAL-001/shap_background.pt
+COPY artifacts/EXP-LONGITUDINAL-001/shap_background_meta.json artifacts/EXP-LONGITUDINAL-001/shap_background_meta.json
 COPY artifacts/EXP-FUSION-BIMODAL-001/clinical_plus_mri.pt  artifacts/EXP-FUSION-BIMODAL-001/clinical_plus_mri.pt
 COPY artifacts/EXP-EEG-STANDALONE-001/                       artifacts/EXP-EEG-STANDALONE-001/
+COPY artifacts/EXP-MRI-ADNI-001/best_checkpoint.pt           artifacts/EXP-MRI-ADNI-001/best_checkpoint.pt
+COPY artifacts/EXP-MRI-ADNI-001/cnn3d_config.json           artifacts/EXP-MRI-ADNI-001/cnn3d_config.json
+COPY artifacts/EXP-MRI-ADNI-001/metrics.json                artifacts/EXP-MRI-ADNI-001/metrics.json
 COPY artifacts/EXP-BASELINE-001/metrics.json                 artifacts/EXP-BASELINE-001/metrics.json
 COPY artifacts/EXP-LONGITUDINAL-001/metrics.json             artifacts/EXP-LONGITUDINAL-001/metrics.json
 COPY artifacts/EXP-FUSION-BIMODAL-001/metrics.json           artifacts/EXP-FUSION-BIMODAL-001/metrics.json
-COPY artifacts/EXP-EXPLAIN-001/metrics.json                  artifacts/EXP-EXPLAIN-001/metrics.json
 
 # Create writable directory for SQLite DB
 RUN mkdir -p /data

@@ -3,7 +3,7 @@ Pydantic schemas for patient input and API responses.
 """
 from __future__ import annotations
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 # ─── Patient Visit Input ──────────────────────────────────────────────────────
@@ -23,23 +23,22 @@ class VisitInput(BaseModel):
     apoe4: Optional[bool] = Field(None, description="APOE4 gene carrier status")
     p_tau: Optional[float] = Field(None, ge=0, description="p-tau181 biomarker level (pg/mL)")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "age": 74.0,
-                "educ": 16.0,
-                "ses": 2.0,
-                "mmse": 27.0,
-                "cdr": 0.5,
-                "nwbv": 0.743,
-                "etiv": 1502.0,
-                "asf": 1.21,
-                "gender": "F",
-                "hand": "R",
-                "apoe4": True,
-                "p_tau": 24.5
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "age": 74.0,
+            "educ": 16.0,
+            "ses": 2.0,
+            "mmse": 27.0,
+            "cdr": 0.5,
+            "nwbv": 0.743,
+            "etiv": 1502.0,
+            "asf": 1.21,
+            "gender": "F",
+            "hand": "R",
+            "apoe4": True,
+            "p_tau": 24.5
         }
+    })
 
 
 class PredictionRequest(BaseModel):
@@ -47,18 +46,17 @@ class PredictionRequest(BaseModel):
     subject_id: Optional[str] = Field(None, description="Optional patient identifier")
     visits: list[VisitInput] = Field(..., min_length=1, description="Chronological list of visits")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "subject_id": "OAS2_0001",
-                "visits": [
-                    {"age": 72.0, "educ": 16.0, "ses": 2.0, "mmse": 29.0, "cdr": 0.0,
-                     "nwbv": 0.763, "etiv": 1480.0, "asf": 1.23},
-                    {"age": 74.0, "educ": 16.0, "ses": 2.0, "mmse": 27.0, "cdr": 0.5,
-                     "nwbv": 0.743, "etiv": 1480.0, "asf": 1.23},
-                ]
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "subject_id": "OAS2_0001",
+            "visits": [
+                {"age": 72.0, "educ": 16.0, "ses": 2.0, "mmse": 29.0, "cdr": 0.0,
+                 "nwbv": 0.763, "etiv": 1480.0, "asf": 1.23},
+                {"age": 74.0, "educ": 16.0, "ses": 2.0, "mmse": 27.0, "cdr": 0.5,
+                 "nwbv": 0.743, "etiv": 1480.0, "asf": 1.23},
+            ]
         }
+    })
 
 
 class MRIInput(BaseModel):
@@ -75,19 +73,18 @@ class BimodalPredictionRequest(BaseModel):
     visits: list[VisitInput] = Field(..., min_length=1)
     mri: MRIInput = Field(..., description="MRI scalars for the current visit")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "subject_id": "OAS2_0001",
-                "visits": [
-                    {"age": 72.0, "educ": 16.0, "ses": 2.0, "mmse": 29.0, "cdr": 0.0,
-                     "nwbv": 0.763, "etiv": 1480.0, "asf": 1.23},
-                    {"age": 74.0, "educ": 16.0, "ses": 2.0, "mmse": 27.0, "cdr": 0.5,
-                     "nwbv": 0.743, "etiv": 1480.0, "asf": 1.23},
-                ],
-                "mri": {"nwbv": 0.743, "etiv": 1480.0, "asf": 1.23, "nwbv_delta": -0.02}
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "subject_id": "OAS2_0001",
+            "visits": [
+                {"age": 72.0, "educ": 16.0, "ses": 2.0, "mmse": 29.0, "cdr": 0.0,
+                 "nwbv": 0.763, "etiv": 1480.0, "asf": 1.23},
+                {"age": 74.0, "educ": 16.0, "ses": 2.0, "mmse": 27.0, "cdr": 0.5,
+                 "nwbv": 0.743, "etiv": 1480.0, "asf": 1.23},
+            ],
+            "mri": {"nwbv": 0.743, "etiv": 1480.0, "asf": 1.23, "nwbv_delta": -0.02}
         }
+    })
 
 
 # ─── Prediction Responses ─────────────────────────────────────────────────────

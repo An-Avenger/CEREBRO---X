@@ -228,9 +228,8 @@ export default function ExplainabilityPage() {
         <div className="callout callout-warning animate-in" role="alert">
           <span>⚠️</span>
           <div>
-            <strong>Research Prototype.</strong> Clinical SHAP uses the trained TemporalCerebroNet.{' '}
-            MRI Grad-CAM uses a synthetic-trained scaffold — see{' '}
-            <code style={{ fontSize: '0.8rem' }}>scripts/train_cnn3d.py</code> for details.
+            <strong>Research Prototype.</strong> Clinical SHAP uses the trained TemporalCerebroNet (OASIS-2, 150 subjects).{' '}
+            MRI Grad-CAM uses the real ADNI pilot CNN3D checkpoint (100 scans, 43% test accuracy — severe class imbalance).{' '}
             Neither is validated for clinical use.
           </div>
         </div>
