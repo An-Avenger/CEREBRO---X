@@ -1,0 +1,16 @@
+{
+  "experiment_id": "EXP-MRI-ADNI-001",
+  "n_scans": 100,
+  "n_subjects": 69,
+  "class_distribution": {
+    "0": 61,
+    "1": 29,
+    "2": 7,
+    "3": 3
+  },
+  "best_val_balanced_accuracy": 0.4583333333333333,
+  "test_accuracy": 0.4375,
+  "test_balanced_accuracy": 0.3333333333333333,
+  "test_macro_f1": 0.256578947368421,
+  "warning": "Pilot experiment: only 100 scans, with severe class imbalance. Research use only."
+}

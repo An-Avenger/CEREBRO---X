@@ -1,5 +1,17 @@
 # Cerebro X — Kaggle Training Guide
 
+## Real ADNI MRI CNN workflow
+
+Use [`notebooks/02_cloud_training/kaggle_adni_mri_training.ipynb`](../notebooks/02_cloud_training/kaggle_adni_mri_training.ipynb) for the MRI model. It requires a private ADNI dataset containing real NIfTI volumes plus `manifest_with_labels.csv`; it does not accept synthetic data.
+
+The notebook performs a GPU smoke test before the full subject-level training run and exports only `EXP-MRI-ADNI-001` artifacts. After downloading its ZIP, extract it to:
+
+```text
+artifacts/EXP-MRI-ADNI-001/
+```
+
+The API discovers `best_checkpoint.pt` there on the next restart. Do not upload, publish, commit, or otherwise redistribute the ADNI source data.
+
 ---
 
 ## Dataset

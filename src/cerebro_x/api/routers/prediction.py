@@ -49,32 +49,40 @@ def predict_clinical(
     except Exception as e:
         raise HTTPException(500, f"Inference error: {e}")
 
-    # Save to database
-    patient = db.query(Patient).filter(Patient.id == request.subject_id).first()
-    if not patient:
-        patient = Patient(id=request.subject_id)
-        db.add(patient)
+    # Persist only identified patients.  ``subject_id`` is intentionally
+    # optional in the public schema to support one-off, de-identified research
+    # predictions; inserting ``None`` into the Patient primary key would make
+    # those otherwise valid requests fail at commit time.
+    if request.subject_id:
+        patient = db.query(Patient).filter(Patient.id == request.subject_id).first()
+        if not patient:
+            patient = Patient(id=request.subject_id)
+            db.add(patient)
 
-    last_visit = request.visits[-1]
-    record = PredictionRecord(
-        patient_id=request.subject_id,
-        age=last_visit.age,
-        educ=last_visit.educ,
-        ses=last_visit.ses,
-        mmse=last_visit.mmse,
-        cdr=last_visit.cdr,
-        nwbv=last_visit.nwbv,
-        etiv=last_visit.etiv,
-        asf=last_visit.asf,
-        predicted_cdr_class=result["predicted_cdr_class"],
-        predicted_cdr_value=result["predicted_cdr_value"],
-        predicted_cdr_label=result["predicted_cdr_label"],
-        class_probabilities=result["class_probabilities"],
-        apoe4=last_visit.apoe4,
-        p_tau=last_visit.p_tau,
-    )
-    db.add(record)
-    db.commit()
+        last_visit = request.visits[-1]
+        record = PredictionRecord(
+            patient_id=request.subject_id,
+            age=last_visit.age,
+            educ=last_visit.educ,
+            ses=last_visit.ses,
+            mmse=last_visit.mmse,
+            cdr=last_visit.cdr,
+            nwbv=last_visit.nwbv,
+            etiv=last_visit.etiv,
+            asf=last_visit.asf,
+            predicted_cdr_class=result["predicted_cdr_class"],
+            predicted_cdr_value=result["predicted_cdr_value"],
+            predicted_cdr_label=result["predicted_cdr_label"],
+            class_probabilities=result["class_probabilities"],
+            apoe4=last_visit.apoe4,
+            p_tau=last_visit.p_tau,
+        )
+        db.add(record)
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise HTTPException(500, "Could not save the identified patient prediction.")
 
     return PredictionResponse(subject_id=request.subject_id, **result)
 

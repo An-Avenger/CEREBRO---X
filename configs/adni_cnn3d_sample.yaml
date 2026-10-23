@@ -1,0 +1,99 @@
+# =============================================================================
+# Cerebro X — ADNI MRI Training Configuration (Sample)
+# =============================================================================
+# IMPORTANT: This file contains NO sensitive information.
+#            Do NOT add participant IDs, file paths to restricted data,
+#            or credentials to this file.
+#
+# Paths must be provided at runtime via CLI arguments, not here.
+# =============================================================================
+
+experiment:
+  id: "EXP-MRI-ADNI-001"
+  description: "ADNI Clinical T1w MRI — CDR 4-class classification"
+  dataset: "ADNI (Alzheimer's Disease Neuroimaging Initiative)"
+  data_use_agreement: "ADNI DUA — data may not be shared publicly"
+  clinically_validated: false
+  warning: >
+    Research prototype. Outputs are NOT medical diagnoses.
+    Single-cohort evaluation. Not externally validated.
+
+# Model architecture
+model:
+  class: "cerebro_x.models.deep.cnn3d.MRICerebroNet"
+  in_channels: 1
+  embedding_dim: 64
+  num_classes: 4
+  input_shape: [1, 1, 64, 64, 64]
+
+# CDR class mapping (documented here for reproducibility)
+label_mapping:
+  # CDR float value → integer class
+  0.0: 0   # Normal
+  0.5: 1   # Very Mild / MCI
+  1.0: 2   # Mild Alzheimer's Disease
+  2.0: 3   # Moderate AD
+  3.0: 3   # Severe AD (merged with Moderate)
+label_names:
+  0: "Normal"
+  1: "Very_Mild_MCI"
+  2: "Mild_AD"
+  3: "Moderate_Severe_AD"
+
+# Preprocessing (must match exactly at inference time)
+preprocessing:
+  target_shape: [64, 64, 64]       # (D, H, W) all volumes resized to this
+  resize_mode: "trilinear"
+  align_corners: false
+  clip_percentiles: [0.5, 99.5]    # outlier clipping before z-score
+  normalization: "z_score_per_sample"
+  background_threshold: 1.0e-3
+  orientation: "RAS_canonical"     # nibabel as_closest_canonical applied
+
+# Dataset split
+split:
+  strategy: "subject_level"         # NEVER split by scan — only by participant
+  val_frac: 0.15
+  test_frac: 0.15
+  seed: 42
+
+# Training hyperparameters
+training:
+  epochs: 50
+  batch_size: 4                    # increase to 8 on ≥16 GB VRAM
+  lr: 1.0e-4
+  weight_decay: 1.0e-4
+  optimizer: "AdamW"
+  scheduler: "CosineAnnealingLR"
+  patience: 10                     # early stopping patience
+  augmentation:
+    random_lr_flip: true           # left-right flip (sagittal)
+    random_ap_flip: true           # anterior-posterior flip (coronal)
+  class_weights: "inverse_frequency"  # computed from ACTUAL training data
+  gradient_clip_norm: 1.0
+  num_workers: 0                   # increase if loading is a bottleneck
+
+# Hardware
+hardware:
+  prefer_gpu: true
+  min_vram_gb: 8                   # minimum recommended VRAM
+
+# Evaluation metrics
+evaluation:
+  metrics:
+    - accuracy
+    - balanced_accuracy
+    - macro_f1
+    - per_class_precision
+    - per_class_recall
+    - confusion_matrix
+  # ROC-AUC is reported only for binary classification; omitted for 4-class
+  limitations:
+    - "Single-site evaluation only"
+    - "CDR is a clinical rating, not an imaging biomarker"
+    - "Results have not been externally validated"
+    - "This does not constitute a clinical diagnosis tool"
+
+# Reproducibility
+seed: 42
+torch_deterministic: true

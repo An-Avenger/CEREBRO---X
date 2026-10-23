@@ -416,9 +416,9 @@ async def explain_mri(
                 "success": False,
                 "error_code": "CNN3D_CHECKPOINT_NOT_AVAILABLE",
                 "error": (
-                    "The 3D CNN model for MRI processing has not been trained yet. "
-                    "No checkpoint exists in artifacts/EXP-MRI-CNN3D-001/. "
-                    "To train: run python scripts/train_cnn3d.py "
+                    "No real-data 3D CNN checkpoint is available. "
+                    "Train one with python scripts/train_cnn3d.py "
+                    "or set CEREBRO_X_CNN3D_ARTIFACT_DIR to its artifact directory. "
                     "(requires MRI NIfTI dataset). "
                     "Grad-CAM is not available without a trained model."
                 ),
@@ -535,7 +535,7 @@ async def explain_mri(
             "preprocessed_to": [64, 64, 64],
             "nwbv_proxy": proc.scalars.nwbv_proxy if proc.scalars else None,
         },
-        "model": "Lightweight3DCNN (EXP-MRI-CNN3D-001)",
+        "model": "MRICerebroNet (real-data CNN3D artifact)",
         "disclaimer": (
             "Grad-CAM heatmap shows regions most influential for the CNN prediction. "
             "This is NOT equivalent to a clinical radiology report. "

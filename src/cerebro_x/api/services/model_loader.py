@@ -229,8 +229,11 @@ class ModelRegistry:
         MRICerebroNet = Lightweight3DCNN backbone + 4-class CDR classifier head.
         This is the correct model for Grad-CAM (outputs logits, not embeddings).
 
-        Expects checkpoint at: artifacts/EXP-MRI-CNN3D-001/cnn3d_cpu.pt
-        Config at:             artifacts/EXP-MRI-CNN3D-001/cnn3d_config.json
+        Prefers a real-data training artifact at
+        ``artifacts/EXP-MRI-ADNI-001/best_checkpoint.pt`` (the output of
+        ``scripts/train_cnn3d.py``).  The older EXP-MRI-CNN3D-001 artifact is
+        retained for architecture tests only and is explicitly rejected when
+        its provenance declares synthetic training data.
 
         If not found, status["cnn3d"] = False — no fake model is created.
         Callers must check registry.status["cnn3d"] before using the model.
@@ -240,12 +243,29 @@ class ModelRegistry:
             sys.path.insert(0, str(Path("src")))
             from cerebro_x.models.deep.cnn3d import MRICerebroNet
 
-            checkpoint_path = ARTIFACTS_DIR / "EXP-MRI-CNN3D-001" / "cnn3d_cpu.pt"
-            config_path     = ARTIFACTS_DIR / "EXP-MRI-CNN3D-001" / "cnn3d_config.json"
-
+            artifact_dir = Path(os.getenv(
+                "CEREBRO_X_CNN3D_ARTIFACT_DIR",
+                str(ARTIFACTS_DIR / "EXP-MRI-ADNI-001"),
+            ))
+            checkpoint_path = artifact_dir / "best_checkpoint.pt"
             if not checkpoint_path.exists():
+                # Legacy format is inspected solely to produce an honest
+                # status. It is never silently promoted to an MRI model.
+                legacy_dir = ARTIFACTS_DIR / "EXP-MRI-CNN3D-001"
+                legacy_checkpoint = legacy_dir / "cnn3d_cpu.pt"
+                if legacy_checkpoint.exists() and self._is_synthetic_cnn_artifact(legacy_dir):
+                    logger.warning(
+                        "Ignoring synthetic CNN3D artifact at %s; it cannot be used for MRI inference.",
+                        legacy_checkpoint,
+                    )
+                    self.status["cnn3d"] = False
+                    self.metrics["cnn3d_status"] = {
+                        "available": False,
+                        "reason": "Synthetic checkpoint rejected for live MRI inference.",
+                    }
+                    return
                 logger.warning(
-                    "CNN3D checkpoint not found at %s. "
+                    "Real-data CNN3D checkpoint not found at %s. "
                     "MRI 3D-CNN and Grad-CAM will be unavailable. "
                     "To train: run python scripts/train_cnn3d.py",
                     checkpoint_path,
@@ -253,7 +273,13 @@ class ModelRegistry:
                 self.status["cnn3d"] = False
                 return
 
+            if self._is_synthetic_cnn_artifact(artifact_dir):
+                logger.warning("Ignoring synthetic CNN3D artifact at %s.", artifact_dir)
+                self.status["cnn3d"] = False
+                return
+
             # Read architecture config if available
+            config_path = artifact_dir / "cnn3d_config.json"
             embedding_dim = 64
             if config_path.exists():
                 with open(config_path) as f:
@@ -265,9 +291,23 @@ class ModelRegistry:
                 embedding_dim=embedding_dim,
                 num_classes=4,
             )
-            model.load_state_dict(
-                torch.load(checkpoint_path, map_location="cpu", weights_only=True)
-            )
+            checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
+            # Training checkpoints include optimiser state; support a plain
+            # state_dict as well for a deliberately exported deployment model.
+            state_dict = checkpoint.get("model_state_dict", checkpoint) if isinstance(checkpoint, dict) else checkpoint
+            # The standalone Kaggle trainer predating the packaged
+            # ``MRICerebroNet`` stores backbone keys as ``features.*`` and
+            # ``fc.*``.  They are architecturally identical to
+            # ``MRICerebroNet.cnn.features`` / ``MRICerebroNet.cnn.fc``;
+            # rewrite only that known legacy naming convention.
+            if isinstance(state_dict, dict) and any(key.startswith("features.") for key in state_dict):
+                state_dict = {
+                    (
+                        f"cnn.{key}" if key.startswith(("features.", "fc.")) else key
+                    ): value
+                    for key, value in state_dict.items()
+                }
+            model.load_state_dict(state_dict)
             model.eval()
             self.models["cnn3d"] = model
             self.status["cnn3d"] = True
@@ -276,6 +316,26 @@ class ModelRegistry:
         except Exception as e:
             logger.error("Failed to load CNN3D: %s", e)
             self.status["cnn3d"] = False
+
+    @staticmethod
+    def _is_synthetic_cnn_artifact(artifact_dir: Path) -> bool:
+        """Return true only when artifact provenance explicitly says synthetic."""
+        for filename in ("cnn3d_meta.json", "metrics.json", "cnn3d_config.json"):
+            path = artifact_dir / filename
+            if not path.exists():
+                continue
+            try:
+                with open(path) as f:
+                    metadata = json.load(f)
+            except (OSError, json.JSONDecodeError):
+                continue
+            provenance = " ".join(
+                str(metadata.get(key, ""))
+                for key in ("status", "dataset", "warning")
+            ).lower()
+            if "synthetic" in provenance:
+                return True
+        return False
 
     def _load_experiment_metrics(self) -> None:
         """Load metrics.json from all experiment directories."""

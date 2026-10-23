@@ -80,3 +80,14 @@ def test_invalid_payload_error(client):
     invalid_payload = {"subject_id": "TEST_SUBJECT_001"}
     response = client.post("/predict/clinical", json=invalid_payload)
     assert response.status_code == 422
+
+
+def test_anonymous_clinical_prediction_is_not_persisted(client):
+    """The documented optional subject_id supports de-identified predictions."""
+    payload = dict(MOCK_PATIENT_PAYLOAD)
+    payload.pop("subject_id")
+
+    response = client.post("/predict/clinical", json=payload)
+
+    assert response.status_code == 200
+    assert response.json()["subject_id"] is None

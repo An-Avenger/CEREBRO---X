@@ -1,0 +1,18 @@
+{
+  "model_class": "cerebro_x.models.deep.cnn3d.MRICerebroNet",
+  "in_channels": 1,
+  "embedding_dim": 64,
+  "num_classes": 4,
+  "input_shape": [
+    1,
+    1,
+    64,
+    64,
+    64
+  ],
+  "dataset": "Real ADNI T1w DICOM converted to NIfTI",
+  "split": "subject-level 70/15/15",
+  "seed": 42,
+  "clinically_validated": false,
+  "warning": "Pilot experiment: only 100 scans, with severe class imbalance. Research use only."
+}

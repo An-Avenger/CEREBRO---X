@@ -51,6 +51,21 @@ data/processed/
 *.tar.bz2
 *.gz
 
+# ── ADNI specific — NEVER COMMIT (HIPAA-protected data) ───────────────────────
+# ADNI clinical data exports — contain participant PII
+data/raw/clinical/
+*CDR*.csv
+*ADNI_clinical*.csv
+*_clinical_export*.csv
+# ADNI imaging manifests — contain participant IDs
+*Clinical_T1w_Imaging_Cohort_Manifest*.csv
+*manifest_with_labels.csv
+*manifest_imaging.csv
+*manifest_validated.csv
+*manifest_unmatched*.csv
+# ADNI DICOM archive (also caught by *.zip above, but be explicit)
+Clinical_T1w_Imaging_Cohort_MRI*.zip
+
 # ── Model weights — NEVER COMMIT (use artifact storage) ──────────────────────
 *.pt
 *.pth

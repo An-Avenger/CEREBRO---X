@@ -1,4 +1,4 @@
-# CEREBRO X — FORENSIC CODE-LEVEL AUDIT
+ś# CEREBRO X — FORENSIC CODE-LEVEL AUDIT
 ### Second-Pass Deep Technical Audit | Based ONLY on Actual Source Code
 
 > **AUDIT RULE**: Every claim in this document is backed by an actual file, function, or line of code.  
