@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { Metadata } from 'next';
 
-const API = 'http://127.0.0.1:8000';
+const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
 interface EEGResult {
   predicted_class: number;
@@ -15,33 +15,33 @@ interface EEGResult {
 }
 
 const SAMPLE_HEALTHY = {
-  global_delta: 1.2e-10,
-  global_theta: 0.8e-10,
-  global_alpha: 3.5e-10,
-  global_beta: 1.1e-10,
-  global_gamma: 0.3e-10,
-  rel_global_delta: 0.15,
-  rel_global_theta: 0.10,
-  rel_global_alpha: 0.45,
-  rel_global_beta: 0.20,
-  rel_global_gamma: 0.05,
-  theta_alpha_ratio: 0.22,
-  spectral_edge_freq_95: 28.5,
+  global_delta: 4.07e-10,
+  global_theta: 0.50e-10,
+  global_alpha: 0.95e-10,
+  global_beta: 0.21e-10,
+  global_gamma: 0.06e-10,
+  rel_global_delta: 0.60,
+  rel_global_theta: 0.073,
+  rel_global_alpha: 0.140,
+  rel_global_beta: 0.031,
+  rel_global_gamma: 0.009,
+  theta_alpha_ratio: 0.26,
+  spectral_edge_freq_95: 250.0,
 };
 
 const SAMPLE_DISEASE = {
-  global_delta: 4.8e-10,
-  global_theta: 3.2e-10,
-  global_alpha: 1.1e-10,
-  global_beta: 0.6e-10,
-  global_gamma: 0.2e-10,
-  rel_global_delta: 0.48,
-  rel_global_theta: 0.32,
-  rel_global_alpha: 0.11,
-  rel_global_beta: 0.06,
-  rel_global_gamma: 0.03,
-  theta_alpha_ratio: 2.91,
-  spectral_edge_freq_95: 14.2,
+  global_delta: 8.76e-09,
+  global_theta: 7.64e-10,
+  global_alpha: 1.87e-10,
+  global_beta: 1.24e-10,
+  global_gamma: 0.49e-10,
+  rel_global_delta: 0.877,
+  rel_global_theta: 0.077,
+  rel_global_alpha: 0.019,
+  rel_global_beta: 0.012,
+  rel_global_gamma: 0.005,
+  theta_alpha_ratio: 2.67,
+  spectral_edge_freq_95: 4.5,
 };
 
 const FIELD_GROUPS = [

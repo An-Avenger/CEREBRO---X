@@ -48,6 +48,7 @@ class ModelRegistry:
         self._load_bimodal_fusion()
         self._load_eeg_encoder()
         self._load_cnn3d()
+        self._load_cnn2d()
         self._load_experiment_metrics()
 
         self._loaded = True
@@ -336,6 +337,33 @@ class ModelRegistry:
             if "synthetic" in provenance:
                 return True
         return False
+
+    def _load_cnn2d(self) -> None:
+        """Load trained 2D CNN (ResNet-18) slice classifier from EXP-MRI-2D-CNN-001."""
+        try:
+            from cerebro_x.models.deep.cnn2d import MRI2DCNN
+
+            artifact_dir = ARTIFACTS_DIR / "EXP-MRI-2D-CNN-001"
+            checkpoint_path = artifact_dir / "best_checkpoint.pt"
+
+            if not checkpoint_path.exists():
+                logger.warning("CNN2D checkpoint not found at %s.", checkpoint_path)
+                self.status["cnn2d"] = False
+                return
+
+            model = MRI2DCNN(num_classes=3, pretrained=False)
+            checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
+            state_dict = checkpoint.get("model_state_dict", checkpoint)
+            model.load_state_dict(state_dict)
+            model.eval()
+
+            self.models["cnn2d"] = model
+            self.status["cnn2d"] = True
+            logger.info("CNN2D (ResNet-18) loaded from %s", checkpoint_path)
+
+        except Exception as e:
+            logger.error("Failed to load CNN2D: %s", e)
+            self.status["cnn2d"] = False
 
     def _load_experiment_metrics(self) -> None:
         """Load metrics.json from all experiment directories."""

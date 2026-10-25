@@ -67,27 +67,47 @@ def eeg_screen(request: EEGScreenRequest, registry=Depends(get_registry)):
     if not registry.status.get("eeg_encoder"):
         raise HTTPException(503, "EEG encoder not loaded. Check artifacts/EXP-EEG-STANDALONE-001/")
 
-    # Build feature vector in the same order as training
-    # The model expects the full 107-feature vector — we use global features only
-    # and pad the rest with NaN (imputer handles it)
+    # Build feature vector in the same order as training (107 features total)
+    # Feature order: 19 channels x 5 bands (0-94), followed by global features (95-106)
+    CHANNELS = ["Fp1","Fp2","F3","F4","C3","C4","P3","P4","O1","O2","F7","F8","T3","T4","T5","T6","Fz","Cz","Pz"]
+    BANDS = ["delta", "theta", "alpha", "beta", "gamma"]
+
     n_features = registry.scalers["eeg_scaler"].n_features_in_
     features = [float("nan")] * n_features
 
-    # Fill in the global features at known positions (0-11)
-    feature_vals = [
-        request.global_delta, request.global_theta, request.global_alpha,
-        request.global_beta, request.global_gamma,
-        request.rel_global_delta or float("nan"),
-        request.rel_global_theta or float("nan"),
-        request.rel_global_alpha or float("nan"),
-        request.rel_global_beta or float("nan"),
-        request.rel_global_gamma or float("nan"),
-        request.theta_alpha_ratio or float("nan"),
-        request.spectral_edge_freq_95 or float("nan"),
+    # 1. Fill 19 channels with global band approximations if individual electrode values not supplied
+    band_map = {
+        "delta": request.global_delta,
+        "theta": request.global_theta,
+        "alpha": request.global_alpha,
+        "beta": request.global_beta,
+        "gamma": request.global_gamma,
+    }
+    idx = 0
+    for ch in CHANNELS:
+        for b in BANDS:
+            if idx < 95:
+                features[idx] = band_map[b]
+                idx += 1
+
+    # 2. Fill global features at indices 95-106 (exact dataset alignment)
+    global_vals = [
+        request.global_delta,
+        request.global_theta,
+        request.global_alpha,
+        request.global_beta,
+        request.global_gamma,
+        request.rel_global_delta if request.rel_global_delta is not None else float("nan"),
+        request.rel_global_theta if request.rel_global_theta is not None else float("nan"),
+        request.rel_global_alpha if request.rel_global_alpha is not None else float("nan"),
+        request.rel_global_beta if request.rel_global_beta is not None else float("nan"),
+        request.rel_global_gamma if request.rel_global_gamma is not None else float("nan"),
+        request.theta_alpha_ratio if request.theta_alpha_ratio is not None else float("nan"),
+        request.spectral_edge_freq_95 if request.spectral_edge_freq_95 is not None else float("nan"),
     ]
-    # Place at beginning of feature vector
-    for i, val in enumerate(feature_vals[:n_features]):
-        features[i] = val
+    for i, val in enumerate(global_vals):
+        if 95 + i < n_features:
+            features[95 + i] = val
 
     try:
         result = run_eeg_inference(

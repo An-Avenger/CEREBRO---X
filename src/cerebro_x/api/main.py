@@ -31,7 +31,7 @@ from fastapi.middleware.cors import CORSMiddleware
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from cerebro_x.api.services.model_loader import get_registry
-from cerebro_x.api.routers import prediction, brain_twin, experiments, eeg, history, mri_upload, patient, explain
+from cerebro_x.api.routers import prediction, brain_twin, experiments, eeg, history, mri_upload, patient, explain, simulation
 from cerebro_x.api.schemas.patient import HealthResponse
 import cerebro_x.api.database as _database  # use module ref so test patches apply
 
@@ -96,6 +96,7 @@ app.include_router(history.router)
 app.include_router(mri_upload.router)
 app.include_router(patient.router)
 app.include_router(explain.router)
+app.include_router(simulation.router)
 
 
 # ─── Root & Health ───────────────────────────────────────────────────────────

@@ -309,6 +309,37 @@ def _generate_slice_pngs(
             logger.warning("Could not generate %s slice: %s", plane, e)
             results[plane] = None
 
+    # Multi-slice stack for interactive slider navigation (e.g. 25%, 35%, 50%, 65%, 75% depth)
+    multi_slices = {"axial": [], "sagittal": [], "coronal": []}
+    slice_fractions = [0.25, 0.35, 0.50, 0.65, 0.75]
+    for frac in slice_fractions:
+        ax_idx = int(D * frac)
+        sag_idx = int(W * frac)
+        cor_idx = int(H * frac)
+
+        # Quick axial slice render
+        try:
+            fig, ax = plt.subplots(figsize=(4, 4))
+            fig.patch.set_facecolor("#0f0f14")
+            m_s = mri[ax_idx, :, :]
+            m_norm = (m_s - m_s.min()) / (m_s.max() - m_s.min() + 1e-8)
+            ax.imshow(m_norm.T, cmap="gray", origin="lower")
+            ax.imshow(heatmap[ax_idx, :, :].T, cmap="hot", alpha=0.55, origin="lower")
+            ax.axis("off")
+            ax.set_title(f"Axial Depth {int(frac*100)}% (z={ax_idx})", color="white", fontsize=8)
+            buf = io.BytesIO()
+            fig.savefig(buf, format="png", dpi=80, bbox_inches="tight", facecolor=fig.get_facecolor())
+            plt.close(fig)
+            buf.seek(0)
+            multi_slices["axial"].append({
+                "depth_pct": int(frac * 100),
+                "index": ax_idx,
+                "image": f"data:image/png;base64,{base64.b64encode(buf.read()).decode('utf-8')}"
+            })
+        except Exception:
+            pass
+
+    results["multi_slices"] = multi_slices
     return results
 
 

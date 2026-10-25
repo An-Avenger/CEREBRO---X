@@ -1,0 +1,80 @@
+{
+  "status": "completed",
+  "model_architecture": "ResNet-18 (ImageNet Pretrained Transfer Learning)",
+  "input_dimension": "(1, 224, 224)",
+  "num_classes": 3,
+  "classes": [
+    "CN",
+    "MCI",
+    "AD"
+  ],
+  "epochs_trained": 8,
+  "best_epoch": 3,
+  "test_subjects_count": 51,
+  "test_slices_count": 253,
+  "subject_level": {
+    "accuracy": 0.5490196078431373,
+    "balanced_accuracy": 0.5105042016806723,
+    "macro_f1": 0.5359013867488444,
+    "precision_macro": 0.5793010752688171,
+    "recall_macro": 0.5105042016806723,
+    "confusion_matrix": [
+      [
+        19,
+        8,
+        1
+      ],
+      [
+        11,
+        6,
+        0
+      ],
+      [
+        1,
+        2,
+        3
+      ]
+    ],
+    "per_class": {
+      "CN": {
+        "precision": 0.6129032258064516,
+        "recall": 0.6785714285714286,
+        "f1-score": 0.6440677966101694,
+        "support": 28.0
+      },
+      "MCI": {
+        "precision": 0.375,
+        "recall": 0.35294117647058826,
+        "f1-score": 0.36363636363636365,
+        "support": 17.0
+      },
+      "AD": {
+        "precision": 0.75,
+        "recall": 0.5,
+        "f1-score": 0.6,
+        "support": 6.0
+      },
+      "accuracy": 0.5490196078431373,
+      "macro avg": {
+        "precision": 0.5793010752688171,
+        "recall": 0.5105042016806723,
+        "f1-score": 0.5359013867488444,
+        "support": 51.0
+      },
+      "weighted avg": {
+        "precision": 0.5497311827956989,
+        "recall": 0.5490196078431373,
+        "f1-score": 0.5454062056255476,
+        "support": 51.0
+      }
+    }
+  },
+  "slice_level": {
+    "accuracy": 0.466403162055336,
+    "balanced_accuracy": 0.4240125035521454,
+    "macro_f1": 0.4295600593178448
+  },
+  "checkpoints": {
+    "best": "artifacts\\EXP-MRI-2D-CNN-001\\best_checkpoint.pt"
+  }
+}

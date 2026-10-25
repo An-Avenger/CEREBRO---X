@@ -1,0 +1,38 @@
+[
+  {
+    "subject_id": "003_S_10073",
+    "true_class": "CN",
+    "predicted_class": "CN",
+    "probabilities": {
+      "CN": 0.9779465198516846,
+      "MCI": 0.017217202112078667,
+      "AD": 0.004836280830204487
+    },
+    "method": "shap_gradient",
+    "artifact_path": "artifacts\\EXP-MRI-2D-CNN-001\\shap_CN_003_S_10073.png"
+  },
+  {
+    "subject_id": "003_S_6258",
+    "true_class": "MCI",
+    "predicted_class": "MCI",
+    "probabilities": {
+      "CN": 0.0034177484922111034,
+      "MCI": 0.9738688468933105,
+      "AD": 0.02271346189081669
+    },
+    "method": "shap_gradient",
+    "artifact_path": "artifacts\\EXP-MRI-2D-CNN-001\\shap_MCI_003_S_6258.png"
+  },
+  {
+    "subject_id": "019_S_10164",
+    "true_class": "AD",
+    "predicted_class": "AD",
+    "probabilities": {
+      "CN": 0.024312758818268776,
+      "MCI": 0.3468993902206421,
+      "AD": 0.6287878155708313
+    },
+    "method": "shap_gradient",
+    "artifact_path": "artifacts\\EXP-MRI-2D-CNN-001\\shap_AD_019_S_10164.png"
+  }
+]

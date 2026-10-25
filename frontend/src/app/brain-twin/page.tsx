@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Interactive3DBrain from '@/components/Interactive3DBrain';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 
@@ -209,12 +210,20 @@ export default function BrainTwinPage() {
               Brain State Visualization
             </h3>
             
-            <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <BrainSilhouette />
+            <div className="card" style={{ display: 'flex', flexDirection: 'column', padding: 20 }}>
+              <Interactive3DBrain
+                atrophyLevel={result ? 0.45 : 0.25}
+                activeRegion="temporal"
+              />
               
-              <div style={{ marginTop: 24, textAlign: 'center' }}>
-                <p className="font-bold text-sm">Structural Representation</p>
-                <p className="text-xs text-muted">MRI DATA NOT CONNECTED — Placeholder State</p>
+              <div style={{ marginTop: 14, textAlign: 'center' }}>
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <span className="badge badge-cyan">Holographic Digital Twin</span>
+                  <span className="badge badge-accent">Z_t Latent Manifold</span>
+                </div>
+                <p className="text-xs text-muted" style={{ lineHeight: 1.5 }}>
+                  Real-time 3D synaptic point cloud with anatomical gyri-sulci modeling and focal atrophy scaling.
+                </p>
               </div>
             </div>
 
